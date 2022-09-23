@@ -1,6 +1,6 @@
 # Lazyweather
 
-<hr>
+<br>
 
 ## Beschreibung
 
