@@ -2,6 +2,7 @@ from geopy.geocoders import Nominatim
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
+import datetime
 
 retry_strategy = Retry(
     total=5,
@@ -115,7 +116,7 @@ def get_icon_by_weathercode(weathercode):
     print(WEATHER_ICONS[weather_description])
 
 
-def get_weather_data(location):
+def get_weather_data(location, days=7):
     location = geolocator.geocode(location)
     print(location.address)
     latitude = "%.2f" % location.latitude
@@ -127,8 +128,8 @@ def get_weather_data(location):
 
     http.mount("https://", adapter)
     http.mount("http://", adapter)
-    start_date = "2022-09-23"
-    end_date = "2022-09-29"
+    start_date = datetime.date.today()
+    end_date = datetime.date.today() + datetime.timedelta(days)
     r = http.get(
         f'https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}'
         f'&start_date={start_date}&end_date={end_date}'
@@ -140,18 +141,19 @@ def get_weather_data(location):
     hourly_data = data['hourly']
     daily_data = data['daily']
 
-    for i in range(7):
+    hours = 24
+    for i in range(days):
         weather_times = {}
-        for j in range(24):
+        offset = i * hours
+        for j in range(hours):
             weather_times[hourly_data['time'][j][11:13]] = {
-                    'temp': hourly_data['temperature_2m'][j + i * 24],
-                    'cloudcover': hourly_data['cloudcover'][j + i * 24],
-                    'precipitation': hourly_data['precipitation'][j + i * 24],
-                    'snowfall': hourly_data['snowfall'][j + i * 24],
-                    'weathercode': hourly_data['weathercode'][j + i * 24],
+                    'temp': hourly_data['temperature_2m'][j + offset],
+                    'cloudcover': hourly_data['cloudcover'][j + offset],
+                    'precipitation': hourly_data['precipitation'][j + offset],
+                    'snowfall': hourly_data['snowfall'][j + offset],
+                    'weathercode': hourly_data['weathercode'][j + offset],
 
                 }
-
 
         daily_weather_data = {
             daily_data['time'][i]: {
@@ -163,7 +165,8 @@ def get_weather_data(location):
                 'weather_times': weather_times
             }
         }
+
         print(daily_weather_data)
 
 
-get_weather_data('incheon')
+get_weather_data('berlin')
