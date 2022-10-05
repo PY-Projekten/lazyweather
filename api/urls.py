@@ -19,5 +19,5 @@ from api.views import get_weather
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('weather/<str:location>', get_weather),
+    path('api/v1/weather/<str:location>', get_weather),
 ]
