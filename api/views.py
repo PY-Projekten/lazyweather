@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from api.apps.weather.utils import get_weather_data
 from rest_framework import serializers
 
+
 @api_view(['GET'])
 def get_weather(request, location):
     """

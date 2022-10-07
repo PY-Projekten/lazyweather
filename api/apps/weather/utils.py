@@ -8,13 +8,14 @@ from api.apps.weather.serializers import LocationSerializer, WeatherDataSerializ
 from .models import Location, WeatherData
 import django.utils.timezone
 from rest_framework import serializers
+
 retry_strategy = Retry(
-    total=5,
+    total=10,
     status_forcelist=[429, 500, 502, 503, 504],
     allowed_methods=["HEAD", "GET", "OPTIONS"]
 )
 adapter = HTTPAdapter(max_retries=retry_strategy)
-geolocator = Nominatim(user_agent="geotest")
+geolocator = Nominatim(user_agent="test", timeout=5)
 
 
 def get_icon_by_weathercode(weathercode):
@@ -37,13 +38,16 @@ def get_weather_data(location, days=7):
     :return: Daily weather data in list form
     """
     location = geolocator.geocode(location)
-    print(location.address)
+    address = None
+    if location:
+        address = location.address
+        print(location.address)
     latitude = "%.2f" % location.latitude
     longitude = "%.2f" % location.longitude
     location = Location.objects.filter(longitude=longitude, latitude=latitude).first()
 
     if location is None:
-        location = Location.objects.create(longitude=longitude, latitude=latitude)
+        location = Location.objects.create(longitude=longitude, latitude=latitude, name=address)
     # try:
     #
     #
@@ -61,7 +65,6 @@ def get_weather_data(location, days=7):
             print('from database')
             return data.data
 
-
         print('from API')
         http = requests.Session()
 
@@ -69,7 +72,7 @@ def get_weather_data(location, days=7):
         # adapter = HTTPAdapter()
 
         http.mount("https://", adapter)
-        http.mount("http://", adapter)
+        http.mount("https://", adapter)
         start_date = datetime.date.today()
         end_date = datetime.date.today() + datetime.timedelta(days)
         r = http.get(
@@ -91,14 +94,14 @@ def get_weather_data(location, days=7):
                 w_code = hourly_data['weathercode'][j + offset]
                 icon = get_icon_by_weathercode(w_code)
                 weather_times[hourly_data['time'][j][11:13]] = {
-                        'temp': hourly_data['temperature_2m'][j + offset],
-                        'cloudcover': hourly_data['cloudcover'][j + offset],
-                        'precipitation': hourly_data['precipitation'][j + offset],
-                        'snowfall': hourly_data['snowfall'][j + offset],
-                        'weathercode': w_code,
-                        'weather_icon': icon,
+                    'temp': hourly_data['temperature_2m'][j + offset],
+                    'cloudcover': hourly_data['cloudcover'][j + offset],
+                    'precipitation': hourly_data['precipitation'][j + offset],
+                    'snowfall': hourly_data['snowfall'][j + offset],
+                    'weathercode': w_code,
+                    'weather_icon': icon,
 
-                    }
+                }
 
             daily_weather_data = {
                 daily_data['time'][i]: {
