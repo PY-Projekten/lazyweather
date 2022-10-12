@@ -16,8 +16,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from api.views import get_weather
+from django.conf.urls import include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/v1/weather/<str:location>', get_weather),
+    #path('api/v1/weather/<str:location>', get_weather),
+    path('api/v1/', include('api.apps.weather.urls'))
 ]

@@ -119,7 +119,7 @@ def get_weather_data(location, days=7):
         return daily_weather_data_list
     except Exception as e:
         print(e)
-
+#Ruhrstraße 46-88, 22761 Hamburg
 
 if __name__ == '__main__':
     get_weather_data('berlin')
