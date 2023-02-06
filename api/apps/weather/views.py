@@ -62,7 +62,12 @@ def weather_list(request):
     API view zum Abrufen oder zum Anlegen von täglichen Witterungsdaten.
     """
     if request.method == 'GET':
-        weathers = WeatherData.objects.all()
+        res = []
+        weathers = WeatherData.objects.filter(location__name='hamburg')
+        # for w in weathers:
+        #     if w.location.name == 'hamburg':
+        #         res.append(w)
+
         serializer = WeatherDataSerializer(weathers, many=True)
         return Response(serializer.data)
     elif request.method == 'POST':

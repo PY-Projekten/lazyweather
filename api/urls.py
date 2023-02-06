@@ -21,5 +21,6 @@ from django.conf.urls import include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/weather/<str:location>', get_weather),
-    path('api/v1/', include('api.apps.weather.urls'))
+    path('api/v1/', include('api.apps.weather.urls')),
+    path('__debug__/', include('debug_toolbar.urls'))
 ]
