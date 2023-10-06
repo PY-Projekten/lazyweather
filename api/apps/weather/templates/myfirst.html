@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weather Data for {{ location_name }}</title>
+    <style>
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 15px;
+        }
+    </style>
+</head>
+<body>
+
+{% for daily_data_dict in weather_data %} <!-- Loop through each day's data -->
+    {% for date, daily_data in daily_data_dict.items %}
+        <h2>Weather Data for {{ location_name }} on {{ date }}</h2>
+        <table>
+            <tr>
+                <th>Max Temperature</th>
+                <th>Min Temperature</th>
+                <th>Current Temperature</th>
+                <th>Precipitation Sum</th>
+                <th>Snowfall Sum</th>
+            </tr>
+            <tr>
+                <td>{{ daily_data.temp_max }}</td>
+                <td>{{ daily_data.temp_min }}</td>
+                <td>{{ daily_data.temp_current }}</td>
+                <td>{{ daily_data.precipitation_sum }}</td>
+                <td>{{ daily_data.snowfall_sum }}</td>
+            </tr>
+        </table>
+
+        <h3>Hourly Data</h3>
+        <table>
+            <tr>
+                <th>Hour</th>
+                <th>Temperature</th>
+                <th>Cloud Cover</th>
+                <th>Precipitation</th>
+                <th>Snowfall</th>
+                <th>Weather Description</th>
+            </tr>
+            {% for hour, hour_data in daily_data.weather_times.items %}
+            <tr>
+                <td>{{ hour }}</td>
+                <td>{{ hour_data.temp }}</td>
+                <td>{{ hour_data.cloudcover }}</td>
+                <td>{{ hour_data.precipitation }}</td>
+                <td>{{ hour_data.snowfall }}</td>
+                <td>{{ hour_data.weather_icon.description }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% endfor %}
+{% endfor %}
+
+</body>
+</html>
