@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
 
     'api.apps.weather.apps.WeatherConfig',
+    #'weather',
 ]
 
 MIDDLEWARE = [
