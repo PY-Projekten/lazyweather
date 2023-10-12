@@ -7,7 +7,6 @@ from .serializers import LocationSerializer, WeatherDataSerializer
 from django.shortcuts import render
 from .forms import WeatherQueryForm
 from .utils import get_weather_data
-from .models import WeatherData
 import logging
 logger = logging.getLogger(__name__)
 
@@ -159,37 +158,62 @@ def weather_display(request):
     #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUES
 
 
+
 def weather_query(request):
-    context = {}
+    form = WeatherQueryForm(request.POST or None)
+    context = {'form': form}
     if request.method == "POST":
-        form = WeatherQueryForm(request.POST)
         if form.is_valid():
-            print("Form is valid")
+            print("Form data: %s", form.cleaned_data)  # Logging the cleaned data
+
             location = form.cleaned_data['location']
             date = form.cleaned_data['date']
+            date = date.strftime('%Y-%m-%d')  # Convert date to string in the desired format
             hour = form.cleaned_data['hour']
 
-            # Construct the query
-            query = WeatherData.objects.filter(location=location, date=date)
-            logger.info(f"Number of entries found: {query.count()}")
-            # If the hour is specified, further filter the results
-            if hour:
-                hour_data = {}
-                for entry in query:
-                    weather_data = entry.data.get('weather_times', {})
-                    hour_data[entry.id] = weather_data.get(hour, {})
-                context['hour_data'] = hour_data
-                logger.info(f"Hour data: {hour_data}")
-            else:
-                context['data'] = [entry.data for entry in query]
-                logger.info(f"Data: {context['data']}")
-        else:
-            print("Form is not valid")  # <-- Add this print statement
-            context['form'] = form
-            return render(request, 'weather_query_template.html', context)
-    else:
-        form = WeatherQueryForm()
+            # Query for the relevant weather data
+            #print(date)
+            query_results = WeatherData.objects.filter(location=location)
+            #print("Query results count: %d", query_results.count())  # Logging the count of results
 
-    context['form'] = form
+            if query_results.exists():
+                entry = query_results.last().data
+
+                day_data = None
+                for item in entry:
+                    if str(date) in item.keys():
+                        day_data = item[str(date)]
+                #print(day_data)
+                # New logic to extract hour_data
+                data_for_date = None
+                #print('ENTRY: ', len(entry))
+                if 'weather_times' in day_data.keys():
+                    data_for_date = day_data['weather_times']
+                else:
+                    data_for_date = day_data
+
+                print('dfd: ', data_for_date)
+
+                #for item in entry:
+                #    print(item)
+
+                if hour:
+                    context['data'] = [{'date': date, 'hour': hour, 'temperature': data_for_date[hour]['temp']}]
+                else:
+                    i = 0
+                    for i in range(24):
+                        h = '0'+i+''[-2:]
+                        context['data'] += [{'date': date, 'hour': h, 'temperature': data_for_date[h]['temp']}]
+                        i+=1
+
+                    context['data'] = [entry.data]  # This would pass the entire day's data
+            else:
+                context['data'] = []
+    print(context)
+
     return render(request, 'weather_query_template.html', context)
+
+
+
+
 

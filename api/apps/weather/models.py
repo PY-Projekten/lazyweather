@@ -35,4 +35,5 @@ class WeatherData(models.Model):
         unique_together = ('location', 'data', 'date')
         verbose_name = 'Weather Data'
         verbose_name_plural = 'Weather Datas'
-
+    def  __str__(self):
+        return self.location.name

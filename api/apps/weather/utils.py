@@ -1,7 +1,7 @@
 from geopy.geocoders import Nominatim
 import requests
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
+from urllib3.util.retry import Retry
 import datetime
 from api.config import *
 from api.apps.weather.serializers import LocationSerializer, WeatherDataSerializer

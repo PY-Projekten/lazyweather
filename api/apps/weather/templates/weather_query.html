@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="query-section">
+    <form method="post" action="{% url 'weather_query2' %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="submit-btn">Execute</button>
+    </form>
+</div>
+
+<div class="results-section">
+    {% if weather_data %}
+        <!-- Display the weather data here -->
+        <div class="weather-result">
+            <p>Temperature: {{ weather_data.temperature }}</p>
+            <!-- Add more fields as needed -->
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
