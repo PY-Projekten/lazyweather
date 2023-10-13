@@ -11,10 +11,11 @@ class WeatherQueryForm(forms.Form):
     )
 
     hour = forms.ChoiceField(
-        choices=[(str(i).zfill(2), str(i).zfill(2)) for i in range(24)],
+        choices=[('', '----')] + [(str(i).zfill(2), str(i).zfill(2)) for i in range(24)],
         required=False,
         widget=forms.Select(attrs={'id': 'hour-input'}),
         label="Hour"
     )
+
 
 

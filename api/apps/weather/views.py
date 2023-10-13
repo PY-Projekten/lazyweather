@@ -163,20 +163,21 @@ def weather_display(request):
 def weather_query(request):
     initial_data = {
         'date': datetime.now().date(),
-        'hour': datetime.now().hour
+        'hour': None
     }
 
     # Instantiate the form with initial values
     form = WeatherQueryForm(request.POST or None, initial=initial_data)
     #form = WeatherQueryForm(request.POST or None)
     context = {'form': form}
+
     if request.method == "POST":
         if form.is_valid():
-            print("Form data: %s", form.cleaned_data)  # Logging the cleaned data
+            #print("Form data: %s", form.cleaned_data)  # Logging the cleaned data
 
             location = form.cleaned_data['location']
             date = form.cleaned_data['date']
-            date = date.strftime('%Y-%m-%d')  # Convert date to string in the desired format
+            date_str = date.strftime('%Y-%m-%d')  # Convert date to string in the desired format
             hour = form.cleaned_data['hour']
 
             # Query for the relevant weather data
@@ -194,13 +195,13 @@ def weather_query(request):
 
                 if hour:  # An hour is selected
                     hour_data = weather_times.get(hour, {})
-                    context['data'].append({'date': date, 'hour': hour, 'temperature': hour_data.get('temp')})
+                    context['data'].append({'date': date_str, 'hour': hour, 'temperature': hour_data.get('temp')})
                 else:  # No hour is selected, display all hours
                     for h, hour_data in weather_times.items():
-                        context['data'].append({'date': date, 'hour': h, 'temperature': hour_data.get('temp')})
+                        context['data'].append({'date': date_str, 'hour': h, 'temperature': hour_data.get('temp')})
 
 
-    print("Context data:", context['data'])
+    #print("Context data:", context['data'])
     return render(request, 'weather_query_template.html', context)
 
 
