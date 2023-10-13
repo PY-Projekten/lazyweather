@@ -8,6 +8,7 @@ from django.shortcuts import render
 from .forms import WeatherQueryForm
 from .utils import get_weather_data
 import logging
+from datetime import datetime
 logger = logging.getLogger(__name__)
 
 
@@ -160,7 +161,14 @@ def weather_display(request):
 
 
 def weather_query(request):
-    form = WeatherQueryForm(request.POST or None)
+    initial_data = {
+        'date': datetime.now().date(),
+        'hour': datetime.now().hour
+    }
+
+    # Instantiate the form with initial values
+    form = WeatherQueryForm(request.POST or None, initial=initial_data)
+    #form = WeatherQueryForm(request.POST or None)
     context = {'form': form}
     if request.method == "POST":
         if form.is_valid():
@@ -178,40 +186,26 @@ def weather_query(request):
 
             if query_results.exists():
                 entry = query_results.last().data
+                print("Entry data:", entry)
+                day_data = entry[0].get(str(date), {})
+                weather_times = day_data.get('weather_times', {})
 
-                day_data = None
-                for item in entry:
-                    if str(date) in item.keys():
-                        day_data = item[str(date)]
-                #print(day_data)
-                # New logic to extract hour_data
-                data_for_date = None
-                #print('ENTRY: ', len(entry))
-                if 'weather_times' in day_data.keys():
-                    data_for_date = day_data['weather_times']
-                else:
-                    data_for_date = day_data
-
-                print('dfd: ', data_for_date)
-
-                #for item in entry:
-                #    print(item)
-
-                if hour:
-                    context['data'] = [{'date': date, 'hour': hour, 'temperature': data_for_date[hour]['temp']}]
-                else:
-                    i = 0
-                    for i in range(24):
-                        h = '0'+i+''[-2:]
-                        context['data'] += [{'date': date, 'hour': h, 'temperature': data_for_date[h]['temp']}]
-                        i+=1
-
-                    context['data'] = [entry.data]  # This would pass the entire day's data
-            else:
                 context['data'] = []
-    print(context)
 
+                if hour:  # An hour is selected
+                    hour_data = weather_times.get(hour, {})
+                    context['data'].append({'date': date, 'hour': hour, 'temperature': hour_data.get('temp')})
+                else:  # No hour is selected, display all hours
+                    for h, hour_data in weather_times.items():
+                        context['data'].append({'date': date, 'hour': h, 'temperature': hour_data.get('temp')})
+
+
+    print("Context data:", context['data'])
     return render(request, 'weather_query_template.html', context)
+
+
+
+
 
 
 

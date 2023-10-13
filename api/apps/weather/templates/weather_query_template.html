@@ -74,5 +74,13 @@
 </div>
 
 </div>
+
+<script>
+window.onload = function() {
+    var now = new Date();
+    document.getElementById('date-input').value = now.toISOString().slice(0,10);
+    document.getElementById('hour-input').value = now.getHours();
+}
+</script>
 </body>
 </html>
