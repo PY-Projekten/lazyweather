@@ -30,6 +30,7 @@ def get_icon_by_weathercode(weathercode):
 
 
 def get_weather_data(location, days=7):
+    print("get_weather_data function called")
     """
     Return daily weather data from open-meteo.com starting today
     Receive the location as a parameter and returns the weather of it
@@ -37,17 +38,17 @@ def get_weather_data(location, days=7):
     :param days: Number of days(max = 7)
     :return: Daily weather data in list form
     """
-    location = geolocator.geocode(location)
+    geoloc = geolocator.geocode(location)
     address = None
-    if location:
-        address = location.address
-        print(location.address)
-    latitude = "%.2f" % location.latitude
-    longitude = "%.2f" % location.longitude
-    location = Location.objects.filter(longitude=longitude, latitude=latitude).first()
+    #if location:
+    #    address = location.address
+    #    print(location.address)
+    latitude = "%.2f" % geoloc.latitude
+    longitude = "%.2f" % geoloc.longitude
+    db_location = Location.objects.filter(longitude=longitude, latitude=latitude).first()
 
-    if location is None:
-        location = Location.objects.create(longitude=longitude, latitude=latitude, name=address)
+    if db_location is None:
+        db_location = Location.objects.create(longitude=longitude, latitude=latitude, name=location.lower())
     # try:
     #
     #
@@ -57,13 +58,13 @@ def get_weather_data(location, days=7):
     #     location.save()
 
     print(location)
-
+    qr = []
     try:
         date = django.utils.timezone.now()
-        data = WeatherData.objects.filter(location=location, date=date).first()
+        data = WeatherData.objects.filter(location=db_location.id, date=date).first()
         if data is not None:
-            print('from database')
-            return data.data
+            print('from database', data.data)
+            qr = data.data
 
         print('from API')
         http = requests.Session()
@@ -75,12 +76,17 @@ def get_weather_data(location, days=7):
         http.mount("https://", adapter)
         start_date = datetime.date.today()
         end_date = datetime.date.today() + datetime.timedelta(days)
+        # Debugging of API request
+        print("Before API request")
         r = http.get(
             f'https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}'
             f'&start_date={start_date}&end_date={end_date}'
             f'&current_weather=True'
             f'&hourly=temperature_2m,precipitation,snowfall,weathercode,cloudcover'
             f'&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum&timezone=Europe%2FBerlin')
+        print("After API request")
+        # Printing the raw JSON response from the API
+        print(f"API Response: {r.json()}")
         data = r.json()
         current_data = data['current_weather']
         hourly_data = data['hourly']
@@ -115,10 +121,11 @@ def get_weather_data(location, days=7):
             }
 
             daily_weather_data_list.append(daily_weather_data)
-        WeatherData.objects.create(location=location, data=daily_weather_data_list)
-        return daily_weather_data_list
+        WeatherData.objects.create(location=db_location, data=daily_weather_data_list)
+        qr = daily_weather_data_list
     except Exception as e:
         print(e)
+    return qr
 #Ruhrstraße 46-88, 22761 Hamburg
 
 if __name__ == '__main__':

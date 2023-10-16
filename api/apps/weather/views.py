@@ -86,6 +86,18 @@ def weather_list(request):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+@api_view(['GET'])
+def get_weather_by_location(request, location):
+    """"""
+    if request.method == "GET":
+
+        location = Location.objects.filter(name=location).first()
+
+        wd = WeatherData.objects.filter(location=location)
+        serializer = WeatherDataSerializer(wd, many=True)
+        return Response(serializer.data)
+
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
 def weather_detail(request, pk):
     """
@@ -160,6 +172,49 @@ def weather_display(request):
 
 
 
+# def weather_query(request):
+#     initial_data = {
+#         'date': datetime.now().date(),
+#         'hour': None
+#     }
+#
+#     form = WeatherQueryForm(request.POST or None, initial=initial_data)
+#     context = {'form': form}
+#
+#     if request.method == "POST" and form.is_valid():
+#         location = form.cleaned_data['location']
+#         date = form.cleaned_data['date']
+#         date_str = date.strftime('%Y-%m-%d')  # Convert date to string in the desired format
+#         hour = form.cleaned_data['hour']
+#
+#         try:
+#             weather_data = get_weather_data(location)
+#             if not weather_data:
+#                 context['error_message'] = "No weather data available for the selected location and date."
+#             else:
+#                 # ... (your existing code to process and add weather_data to the context)
+#                 query_results = WeatherData.objects.filter(location=location)
+#
+#                 if query_results.exists():
+#                     entry = query_results.last().data
+#                     day_data = entry[0].get(str(date), {})
+#                     weather_times = day_data.get('weather_times', {})
+#
+#                     context['data'] = []
+#
+#                     if hour:  # An hour is selected
+#                         hour_data = weather_times.get(hour, {})
+#                         context['data'].append({'date': date_str, 'hour': hour, 'temperature': hour_data.get('temp')})
+#                     else:  # No hour is selected, display all hours
+#                         for h, hour_data in weather_times.items():
+#                             context['data'].append({'date': date_str, 'hour': h, 'temperature': hour_data.get('temp')})
+#
+#         except Exception as e:
+#             context['error_message'] = f"An error occurred while fetching weather data: {e}"
+#
+#     return render(request, 'weather_query_template.html', context)
+
+
 def weather_query(request):
     initial_data = {
         'date': datetime.now().date(),
@@ -168,41 +223,59 @@ def weather_query(request):
 
     # Instantiate the form with initial values
     form = WeatherQueryForm(request.POST or None, initial=initial_data)
-    #form = WeatherQueryForm(request.POST or None)
+
     context = {'form': form}
 
-    if request.method == "POST":
-        if form.is_valid():
-            #print("Form data: %s", form.cleaned_data)  # Logging the cleaned data
+    if request.method == "POST" and form.is_valid():
+        location = form.cleaned_data['location']
+        date = form.cleaned_data['date']
+        date_str = date.strftime('%Y-%m-%d')
+        hour = form.cleaned_data['hour']
+        # Query for the relevant weather data
+        print(f"User Input - Location: {location}, Date: {date}, Hour: {hour}", location.name, location.longitude)
+        #db_location = Location.objects.filter(name=location.lower()).first()
+        query_results = WeatherData.objects.filter(location_id=location.id, date=date_str)
+        # Debugging the query
+        if query_results.exists():
+            print(f"Database Query Results: {query_results}")
+        else:
+            print("No data found in the database for the given location and date.")
+            #get_weather_data(location)
 
-            location = form.cleaned_data['location']
-            date = form.cleaned_data['date']
-            date_str = date.strftime('%Y-%m-%d')  # Convert date to string in the desired format
-            hour = form.cleaned_data['hour']
+        if not query_results.exists():  # If data doesn't exist in the database
 
-            # Query for the relevant weather data
-            #print(date)
-            query_results = WeatherData.objects.filter(location=location)
-            #print("Query results count: %d", query_results.count())  # Logging the count of results
+            # Fetch weather data from the API and update the database
+            dt = get_weather_data(location.name)
 
-            if query_results.exists():
-                entry = query_results.last().data
-                print("Entry data:", entry)
-                day_data = entry[0].get(str(date), {})
-                weather_times = day_data.get('weather_times', {})
+            print(f"Fetching data from API for Location: {location.name}, Date: {date_str}")
+            # Re-query the database after updating
+            query_results = WeatherData.objects.filter(location=location, date=date_str)
+            print("-------------------")
+            print(dt)
+            print("-----------------------")
 
-                context['data'] = []
+        if query_results.exists():
+            entry = query_results.last().data
+            #print("Entry data:", entry)
+            day_data = entry[0].get(str(date), {})
+            weather_times = day_data.get('weather_times', {})
 
-                if hour:  # An hour is selected
-                    hour_data = weather_times.get(hour, {})
-                    context['data'].append({'date': date_str, 'hour': hour, 'temperature': hour_data.get('temp')})
-                else:  # No hour is selected, display all hours
-                    for h, hour_data in weather_times.items():
-                        context['data'].append({'date': date_str, 'hour': h, 'temperature': hour_data.get('temp')})
+            context['data'] = []
 
+            if hour:  # An hour is selected
+                hour_data = weather_times.get(hour, {})
+                context['data'].append({'date': date_str, 'hour': hour, 'temperature': hour_data.get('temp')})
+            else:  # No hour is selected, display all hours
+                for h, hour_data in weather_times.items():
+                    context['data'].append({'date': date_str, 'hour': h, 'temperature': hour_data.get('temp')})
 
-    #print("Context data:", context['data'])
+    if 'data' in context:
+        print(f"Data to be rendered: {context['data']}")
+    else:
+        print("No data to be rendered yet.")
+
     return render(request, 'weather_query_template.html', context)
+
 
 
 

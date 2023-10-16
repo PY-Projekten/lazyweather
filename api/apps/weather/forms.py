@@ -1,7 +1,6 @@
 from django import forms
 from .models import Location
 
-
 class WeatherQueryForm(forms.Form):
     location = forms.ModelChoiceField(queryset=Location.objects.all(), label="Location")
 
