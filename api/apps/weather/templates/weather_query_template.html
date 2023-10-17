@@ -28,11 +28,17 @@
     {% endif %}
 
     <!-- Form for Weather Query -->
-    <form method="post">
+
+<form method="post">
         {% csrf_token %}
         <div>
-            <label for="{{ form.location.id_for_label }}">Location:</label>
-            {{ form.location }}
+            <label for="location">Location:</label>
+            <input list="locations" name="location" id="location" autocomplete="off">
+            <datalist id="locations">
+                {% for location in locations %}
+                    <option value="{{ location.name }}">
+                {% endfor %}
+            </datalist>
         </div>
         <div>
             <label for="{{ form.date.id_for_label }}">Date:</label>
@@ -45,42 +51,61 @@
         <button type="submit">Query</button>
     </form>
 
-<!-- Results Section -->
-<div class="results-section">
-    <h2>Results:</h2>
-    {% if data %}
-    <table>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Hour</th>
-                <th>Temperature</th>
-                <!-- Add other columns as needed -->
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in data %}
-                    <tr>
-                        <td>{{ item.date }}</td>
-                        <td>{{ item.hour }}</td>
-                        <td>{{ item.temperature }}</td>
-                    </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-        <p>No results found.</p>
-    {% endif %}
-</div>
+
+    <!-- Results Section -->
+    <div class="results-section">
+        <h2>Results:</h2>
+        {% if data %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Hour</th>
+                    <th>Temperature</th>
+                    <!-- Add other columns as needed -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in data %}
+                        <tr>
+                            <td>{{ item.date }}</td>
+                            <td>{{ item.hour }}</td>
+                            <td>{{ item.temperature }}</td>
+                        </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p>No results found.</p>
+        {% endif %}
+    </div>
 
 </div>
+
+<!-- ... (your existing HTML code) -->
 
 <script>
-window.onload = function() {
-    var now = new Date();
-    document.getElementById('date-input').value = now.toISOString().slice(0,10);
-    document.getElementById('hour-input').value = now.getHours();
-}
+    document.addEventListener('DOMContentLoaded', function() {
+        var locations = {{ locations|safe }};  // Get locations from Django context
+
+        var input = document.getElementById("location");
+
+        input.addEventListener("input", function() {
+            var list = document.getElementById("locations");
+            list.innerHTML = "";  // Clear the existing options
+
+            var value = input.value.toLowerCase();
+
+            locations.forEach(function(location) {
+                if (location.toLowerCase().includes(value)) {
+                    var option = document.createElement("option");
+                    option.value = location;
+                    list.appendChild(option);
+                }
+            });
+        });
+    });
 </script>
+
 </body>
 </html>
