@@ -31,15 +31,19 @@ DEBUG = True
 CORS_ORIGIN_ALLOW_ALL = False
 ALLOWED_HOSTS = [
     'localhost',
-    '127.0.0.1'
+    '127.0.0.1',
 ]
 CORS_ORIGIN_WHITELIST = (
     'http://localhost:3000',
     'http://127.0.0.1:3000',
+    'http://localhost:8080',
+    'http://127.0.0.1:8080',
 )
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://localhost:3000",
+    "http://127.0.0.1:8080",
+    "http://localhost:8080",
 ]
 CORS_ALLOW_CREDENTIALS = False
 

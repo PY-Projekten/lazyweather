@@ -29,7 +29,7 @@
 
     <!-- Form for Weather Query -->
 
-<form method="post">
+<form method="post" id="weatherQueryForm">
         {% csrf_token %}
         <div>
             <label for="location">Location:</label>
@@ -48,6 +48,7 @@
             <label for="{{ form.hour.id_for_label }}">Hour:</label>
             {{ form.hour }}
         </div>
+        <input type="hidden" name="confirmed" id="confirmed" value="false">
         <button type="submit">Query</button>
     </form>
 
@@ -103,6 +104,21 @@
                     list.appendChild(option);
                 }
             });
+        });
+    document.getElementById('weatherQueryForm').addEventListener('submit', function(event) {
+    var confirmed = document.getElementById('confirmed').value;
+    var locationInput = document.getElementById('location').value.toLowerCase();
+    var locations = {{ locations|safe }};
+    var locationExists = locations.includes(locationInput);
+
+    if (!locationExists && confirmed === 'false') {
+        event.preventDefault();
+        var userConfirmed = confirm("Do you want to add this new location and its weather data to the database?");
+        if (userConfirmed) {
+            document.getElementById('confirmed').value = 'true';
+            event.target.submit();
+                }
+            }
         });
     });
 </script>
