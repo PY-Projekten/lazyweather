@@ -108,6 +108,8 @@ def get_weather_data(location, days=7):
                     'weather_icon': icon,
 
                 }
+            # Save each day’s data to the database here
+            WeatherData.objects.create(location=db_location, data=daily_weather_data_list[i], date=daily_data['time'][i])
 
             daily_weather_data = {
                 daily_data['time'][i]: {
