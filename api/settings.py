@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-y!14w=ru(6urf6!743r5-vq_!+b%mn-kk)#bl#ccav4(w8mu4+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-CORS_ORIGIN_ALLOW_ALL = False
+CORS_ALLOW_ALL_ORIGINS = True
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
@@ -43,7 +43,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://localhost:3000",
     "http://127.0.0.1:8080",
-    "http://localhost:8080",
+    "http://localhost:8080", # Vue frontend
 ]
 CORS_ALLOW_CREDENTIALS = False
 

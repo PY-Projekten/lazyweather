@@ -247,7 +247,88 @@ def weather_display(request):
 #Vue.js Front-End Version ("lazyweather_front-end")
 
 #Django Front-End Version
+# @api_view(['GET', 'POST'])
+# def weather_query(request):
+#     print("weather_query method called")
+#     form = WeatherQueryForm(request.POST or None, initial={'date': datetime.now().date()})
+#     context = {'form': form}
+#
+#     # Query all location names and pass them to the context
+#     locations = Location.objects.all().values_list('name', flat=True)
+#     context['locations'] = list(locations)
+#
+#     if request.method == "POST" and form.is_valid():
+#         print("POST data received:", request.POST)
+#         location_name = form.cleaned_data['location']
+#         date = form.cleaned_data['date']
+#         date_str = date.strftime('%Y-%m-%d')  # Correctly formatting the date as a string
+#         hour = form.cleaned_data['hour']
+#         # This line checks if a POST variable named confirmed exists and if its value is "true".
+#         # This variable is set by the JavaScript code when the user confirms the addition of a new location.
+#         confirmed = request.POST.get('confirmed') == "true"
+#         print(f"Confirmed: {confirmed}")
+#
+#         location = None
+#         try:
+#             location = Location.objects.get(name=location_name.lower())
+#         except ObjectDoesNotExist:
+#             pass
+#         print(f"Location: {location}")
+#
+#         # If the location exists in the database
+#         if location:
+#             query_results = WeatherData.objects.filter(location=location, date=date_str)
+#             # If weather data for the queried date does not exist, fetch new data
+#             if not query_results.exists():
+#                 get_weather_data(location_name)  # Ensure this function fetches data for the specific date and location
+#
+#             # Refresh the query results after potentially fetching new data
+#             query_results = WeatherData.objects.filter(location=location, date=date_str)
+#
+#         # This condition checks if the location does not exist in the database
+#         # and if the user has not confirmed the addition of the new location.
+#         if not location and not confirmed:
+#             return JsonResponse(response_data)
+#
+#         # If the location is newly created or weather data is not available, fetch it
+#         if not location:
+#             get_weather_data(location_name)
+#
+#         query_results = WeatherData.objects.filter(location=location, date=date_str)
+#
+#         if query_results.exists():
+#             entry = query_results.last().data
+#
+#             # Check if entry is a list and get the first element if it is
+#             if isinstance(entry, list):
+#                 entry = entry[0]
+#
+#             day_data = entry.get(str(date), {})
+#             weather_times = day_data.get('weather_times', {})
+#
+#             context['data'] = []
+#
+#             if hour:  # An hour is selected
+#                 hour_data = weather_times.get(hour, {})
+#                 context['data'].append({'date': date_str, 'hour': hour, 'temperature': hour_data.get('temp')})
+#             else:  # No hour is selected, display all hours
+#                 for h, hour_data in weather_times.items():
+#                     context['data'].append({'date': date_str, 'hour': h, 'temperature': hour_data.get('temp')})
+#
+#     return JsonResponse(response_data)
+
+
+#Django Front-End Version Test 2 (Defining "response_data" from JsonResponses)
+@api_view(['GET', 'POST'])
 def weather_query(request):
+    print("weather_query method called")
+
+    # Default response data
+    response_data = {
+        'status': 'error',
+        'message': 'An unexpected error occurred.'
+    }
+
     form = WeatherQueryForm(request.POST or None, initial={'date': datetime.now().date()})
     context = {'form': form}
 
@@ -256,6 +337,7 @@ def weather_query(request):
     context['locations'] = list(locations)
 
     if request.method == "POST" and form.is_valid():
+        print("POST data received:", request.POST)
         location_name = form.cleaned_data['location']
         date = form.cleaned_data['date']
         date_str = date.strftime('%Y-%m-%d')  # Correctly formatting the date as a string
@@ -264,6 +346,23 @@ def weather_query(request):
         # This variable is set by the JavaScript code when the user confirms the addition of a new location.
         confirmed = request.POST.get('confirmed') == "true"
         print(f"Confirmed: {confirmed}")
+
+        if request.method == 'POST':
+            print("POST data received:")
+
+            # Here you can add the code to handle the POST request,
+            # process the data, and modify the response_data accordingly.
+
+            # For example:
+            received_data = request.data  # Assuming you sent JSON data
+            if received_data:  # Check if data is not empty or None
+                # Process the data (you can add your own logic here)
+
+                response_data = {
+                    'status': 'success',
+                    'message': 'Data processed successfully.',
+                    'data': received_data  # Just echoing back the received data as an example
+                }
 
         location = None
         try:
@@ -313,8 +412,6 @@ def weather_query(request):
                     context['data'].append({'date': date_str, 'hour': h, 'temperature': hour_data.get('temp')})
 
     return JsonResponse(response_data)
-
-
 
 
 
