@@ -18,6 +18,7 @@ from django.urls import path, include
 from api.views import get_weather
 from django.conf.urls import include
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/weather/<str:location>', get_weather),

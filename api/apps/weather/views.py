@@ -172,6 +172,10 @@ def weather_display(request):
     #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUES
 
 
+def available_locations(request):
+    locations = Location.objects.all().values_list('name', flat=True)
+    return JsonResponse({'locations': list(locations)}, safe=False)
+
 
 
 #Django Front-End Version
@@ -480,6 +484,58 @@ def weather_display(request):
     # Form handling and location listing.
     # Confirmation check for new locations.
     # Fetching new weather data if it doesn’t exist for the specified location and date.
+# @api_view(['GET', 'POST'])
+# def weather_query(request):
+#     response_data = {
+#         'status': 'error',
+#         'message': 'An unexpected error occurred.'
+#     }
+#
+#     context = {'data': []}  # Initializing context and context['data']
+#
+#     if request.method == "POST":
+#         location_name = request.data['location']
+#         date = request.data['date']
+#         hour = request.data.get('hour')  # Hour can be None
+#
+#         location = Location.objects.filter(name=location_name.lower()).first()
+#
+#         if location:
+#             query_results = WeatherData.objects.filter(location=location, date=date)
+#
+#             if query_results.exists():
+#                 entry = query_results.last().data
+#                 date_data = next((e for e in entry if date in e), None)
+#
+#                 if date_data:
+#                     weather_times = date_data[date].get('weather_times', {})
+#                     context['data'] = []
+#
+#                     for h, hour_data in weather_times.items():
+#                         if hour and h.zfill(2) != hour.zfill(2):  # Ensure hour format matches
+#                             continue
+#                         context['data'].append({
+#                             'date': date,
+#                             'hour': h,
+#                             'temperature': hour_data.get('temp')
+#                         })
+#
+#                     if context['data']:
+#                         response_data = {
+#                             'status': 'success',
+#                             'message': 'Data processed successfully.',
+#                             'data': context['data']
+#                         }
+#                     else:
+#                         response_data['message'] = 'No weather data available for the specified hour.'
+#
+#     return JsonResponse(response_data)
+
+from django.http import JsonResponse
+from rest_framework.decorators import api_view
+from .models import Location, WeatherData
+
+
 @api_view(['GET', 'POST'])
 def weather_query(request):
     response_data = {
@@ -487,11 +543,9 @@ def weather_query(request):
         'message': 'An unexpected error occurred.'
     }
 
-    context = {'data': []}  # Initializing context and context['data']
-
     if request.method == "POST":
-        location_name = request.data['location']
-        date = request.data['date']
+        location_name = request.data.get('location')
+        date = request.data.get('date')
         hour = request.data.get('hour')  # Hour can be None
 
         location = Location.objects.filter(name=location_name.lower()).first()
@@ -501,31 +555,34 @@ def weather_query(request):
 
             if query_results.exists():
                 entry = query_results.last().data
-                date_data = next((e for e in entry if date in e), None)
 
-                if date_data:
-                    weather_times = date_data[date].get('weather_times', {})
-                    context['data'] = []
+                # Check if entry is a list and get the first element if it is
+                if isinstance(entry, list):
+                    entry = entry[0]
 
-                    for h, hour_data in weather_times.items():
-                        if hour and h.zfill(2) != hour.zfill(2):  # Ensure hour format matches
-                            continue
-                        context['data'].append({
-                            'date': date,
-                            'hour': h,
-                            'temperature': hour_data.get('temp')
-                        })
+                date_data = entry.get(date, {}).get('weather_times', {})
 
-                    if context['data']:
-                        response_data = {
-                            'status': 'success',
-                            'message': 'Data processed successfully.',
-                            'data': context['data']
-                        }
-                    else:
-                        response_data['message'] = 'No weather data available for the specified hour.'
+                response_data['data'] = []
+
+                for h, hour_data in date_data.items():
+                    if hour and h.zfill(2) != hour.zfill(2):  # Ensure hour format matches
+                        continue
+                    response_data['data'].append({
+                        'date': date,
+                        'hour': h.zfill(2),
+                        'temperature': hour_data.get('temp')
+                    })
+
+                if response_data['data']:
+                    response_data['status'] = 'success'
+                    response_data['message'] = 'Data processed successfully.'
+                else:
+                    response_data['message'] = 'No weather data available for the specified hour.'
+            else:
+                response_data['message'] = 'No weather data available for the specified date and location.'
+        else:
+            response_data['message'] = 'Location does not exist.'
 
     return JsonResponse(response_data)
-
 
 
