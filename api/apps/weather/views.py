@@ -234,6 +234,66 @@ def available_locations(request):
 
 
 #Modularization of Weather Query Version 2
+# @api_view(['GET', 'POST'])
+# def weather_query(request):
+#     if request.method != "POST":
+#         return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
+#
+#     location_name = request.data.get('location')
+#     date = request.data.get('date')
+#     hour = request.data.get('hour')  # Hour can be None
+#
+#     # Check if location_name is None or empty
+#     if not location_name:
+#         return JsonResponse({'status': 'error', 'message': 'Location is required.'})
+#
+#     location = get_location(location_name)
+#     if not location:
+#         return JsonResponse({'status': 'error', 'message': 'Location does not exist.'})
+#
+#     weather_data = fetch_weather_data(location, date, hour)
+#     if not weather_data:
+#         return JsonResponse({'status': 'error', 'message': 'No weather data available for the specified parameters.'})
+#
+#     return JsonResponse({'status': 'success', 'message': 'Data processed successfully.', 'data': weather_data})
+#
+#
+# def get_location(location_name):
+#     return Location.objects.filter(name=location_name.lower()).first()
+#
+#
+# def fetch_weather_data(location, date, hour):
+#     query_results = WeatherData.objects.filter(location=location, date=date)
+#     if not query_results.exists():
+#         return None
+#
+#     entry = query_results.last().data
+#
+#     # Handling the case where entry is a list
+#     if isinstance(entry, list):
+#         entry = entry[0] if entry else {}
+#
+#     date_data = entry.get(date, {}).get('weather_times', {})
+#
+#     # Filtering and processing logic here
+#     weather_data = []
+#     for h, hour_data in date_data.items():
+#         if hour and h.zfill(2) != hour.zfill(2):  # Ensure hour format matches
+#             continue
+#         weather_data.append({
+#             'date': date,
+#             'hour': h.zfill(2),
+#             'temperature': hour_data.get('temp')
+#         })
+#
+#     return weather_data
+
+
+
+
+# Implement and test the functionality to handle new location queries,
+# fetch the corresponding weather data from an external API,
+# update the database, and display the results on the frontend.
 @api_view(['GET', 'POST'])
 def weather_query(request):
     if request.method != "POST":
@@ -250,6 +310,14 @@ def weather_query(request):
     location = get_location(location_name)
     if not location:
         return JsonResponse({'status': 'error', 'message': 'Location does not exist.'})
+
+    # Check if the weather data for the location is in the database
+    existing_data = WeatherData.objects.filter(location=location)
+
+    if not existing_data.exists():
+        weather_data = fetch_save_new_weather_data(location)
+    else:
+        weather_data = get_weather_data(location)
 
     weather_data = fetch_weather_data(location, date, hour)
     if not weather_data:
@@ -289,4 +357,12 @@ def fetch_weather_data(location, date, hour):
     return weather_data
 
 
+def fetch_save_new_weather_data(location):
+    # Fetch data from the external API
+    fetched_data = fetch_data_from_api(location)  # Assuming you have a function to fetch data from the API
 
+    # Process and save the fetched data in the database
+    processed_data = process_fetched_data(fetched_data)  # Assuming you have a function to process the data
+    WeatherData.objects.create(location=location, data=processed_data)
+
+    return processed_data
