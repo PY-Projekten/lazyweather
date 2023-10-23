@@ -180,7 +180,7 @@ def available_locations(request):
 
 
 
-#
+#Successufly retrieves and posts existing data from the database
 # @api_view(['GET', 'POST'])
 # def weather_query(request):
 #     response_data = {
@@ -232,14 +232,16 @@ def available_locations(request):
 
 
 
+
+#Modularization of Weather Query Version 2
 @api_view(['GET', 'POST'])
 def weather_query(request):
     if request.method != "POST":
         return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
 
-    location_name = request.POST.get('location')
-    date = request.POST.get('date')
-    hour = request.POST.get('hour')  # Hour can be None
+    location_name = request.data.get('location')
+    date = request.data.get('date')
+    hour = request.data.get('hour')  # Hour can be None
 
     # Check if location_name is None or empty
     if not location_name:
@@ -249,7 +251,7 @@ def weather_query(request):
     if not location:
         return JsonResponse({'status': 'error', 'message': 'Location does not exist.'})
 
-    weather_data = get_weather_data(location, date, hour)
+    weather_data = fetch_weather_data(location, date, hour)
     if not weather_data:
         return JsonResponse({'status': 'error', 'message': 'No weather data available for the specified parameters.'})
 
@@ -260,26 +262,31 @@ def get_location(location_name):
     return Location.objects.filter(name=location_name.lower()).first()
 
 
-def get_weather_data(location, date, hour):
+def fetch_weather_data(location, date, hour):
     query_results = WeatherData.objects.filter(location=location, date=date)
     if not query_results.exists():
         return None
 
-    weather_entries = query_results.last().data  # Assuming data is a JSON field or dictionary
+    entry = query_results.last().data
+
+    # Handling the case where entry is a list
+    if isinstance(entry, list):
+        entry = entry[0] if entry else {}
+
+    date_data = entry.get(date, {}).get('weather_times', {})
 
     # Filtering and processing logic here
-    processed_weather_data = []
-    for entry in weather_entries:
-        entry_date = entry.get('date')
-        entry_hour = entry.get('hour')
+    weather_data = []
+    for h, hour_data in date_data.items():
+        if hour and h.zfill(2) != hour.zfill(2):  # Ensure hour format matches
+            continue
+        weather_data.append({
+            'date': date,
+            'hour': h.zfill(2),
+            'temperature': hour_data.get('temp')
+        })
 
-        if date == entry_date and (not hour or hour == entry_hour):
-            processed_weather_data.append({
-                'date': entry_date,
-                'hour': entry_hour.zfill(2),
-                'temperature': entry.get('temperature')
-            })
+    return weather_data
 
-    return processed_weather_data
 
 
