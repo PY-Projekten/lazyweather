@@ -303,9 +303,12 @@ def weather_query(request):
     date = request.data.get('date')
     hour = request.data.get('hour')  # Hour can be None
 
+    temp = get_weather_data(location_name)
+
+    print(temp)
     # Check if location_name is None or empty
-    if not location_name:
-        return JsonResponse({'status': 'error', 'message': 'Location is required.'})
+    #if not location_name:
+    #    return JsonResponse({'status': 'error', 'message': 'Location is required.'})
 
     location = get_location(location_name)
     if not location:
@@ -324,6 +327,35 @@ def weather_query(request):
         return JsonResponse({'status': 'error', 'message': 'No weather data available for the specified parameters.'})
 
     return JsonResponse({'status': 'success', 'message': 'Data processed successfully.', 'data': weather_data})
+
+
+# Enhancing weather_query to accept new locations
+# @api_view(['GET', 'POST'])
+# def weather_query(request):
+#     if request.method != "POST":
+#         return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
+#
+#     location_name = request.data.get('location')
+#     date = request.data.get('date')
+#     hour = request.data.get('hour')  # Hour can be None
+#
+#     # Check if location_name is None or empty
+#     if not location_name:
+#         return JsonResponse({'status': 'error', 'message': 'Location is required.'})
+#
+#     location = get_location(location_name)
+#     # If location does not exist in the database, fetch and save new weather data
+#     if not location:
+#         success = fetch_save_new_weather_data(location_name)
+#         if not success:
+#             return JsonResponse({'status': 'error', 'message': 'Failed to fetch new location data.'})
+#         location = get_location(location_name) # Re-fetch the location after saving new data
+#
+#     weather_data = fetch_weather_data(location, date, hour)
+#     if not weather_data:
+#         return JsonResponse({'status': 'error', 'message': 'No weather data available for the specified parameters.'})
+#
+#     return JsonResponse({'status': 'success', 'message': 'Data processed successfully.', 'data': weather_data})
 
 
 def get_location(location_name):
