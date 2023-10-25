@@ -72,4 +72,3 @@ Die Lazyweather-API ist eine Python API, die Wetterdaten von der [open-meteo.com
 
 ---
 
-This README.md includes the existing German content and updates it with setup and installation instructions. Let me know if there is anything else you would like to add or modify!

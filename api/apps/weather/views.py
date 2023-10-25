@@ -155,140 +155,74 @@ def weather_display(request):
         # Render the template with the context data
         return render(request, 'myfirst.html', context)
 
-    # if request.method == 'GET':
-    #     res = []
-    #     weathers = WeatherData.objects.filter(location__name='hamburg')
-    #     # for w in weathers:
-    #     #     if w.location.name == 'hamburg':
-    #     #         res.append(w)
-    #
-    #     serializer = WeatherDataSerializer(weathers, many=True)
-    #     return Response(serializer.data)
-    # elif request.method == 'POST':
-    #     serializer = WeatherDataSerializer(data=request.data)
-    #     if serializer.is_valid():
-    #         serializer.save()
-    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUES
+
+
+# *** Version: old weather_query method for django-frontend Template (weather_query_template.html), that ***
+# +++ this also corresponds with forms.py +++
+
+# def weather_query(request):
+#     form = WeatherQueryForm(request.POST or None, initial={'date': datetime.now().date()})
+#     context = {'form': form}
+#
+#     # Query all location names and pass them to the context
+#     locations = Location.objects.all().values_list('name', flat=True)
+#     context['locations'] = list(locations)
+#
+#     if request.method == "POST" and form.is_valid():
+#         location_name = form.cleaned_data['location']
+#         date = form.cleaned_data['date']
+#         date_str = date.strftime('%Y-%m-%d')  # Correctly formatting the date as a string
+#         hour = form.cleaned_data['hour']
+#         # This line checks if a POST variable named confirmed exists and if its value is "true".
+#         # This variable is set by the JavaScript code when the user confirms the addition of a new location.
+#         confirmed = request.POST.get('confirmed') == "true"
+#         print(f"Confirmed: {confirmed}")
+#
+#         location = None
+#         try:
+#             location = Location.objects.get(name=location_name.lower())
+#         except ObjectDoesNotExist:
+#             pass
+#         print(f"Location: {location}")
+#
+#         # This condition checks if the location does not exist in the database
+#         # and if the user has not confirmed the addition of the new location.
+#         if not location and not confirmed:
+#             return render(request, 'weather_query_template.html', context)
+#
+#         # If the location is newly created or weather data is not available, fetch it
+#         if not location:
+#             get_weather_data(location_name)
+#
+#         query_results = WeatherData.objects.filter(location=location, date=date_str)
+#
+#         if query_results.exists():
+#             entry = query_results.last().data
+#
+#             # Check if entry is a list and get the first element if it is
+#             if isinstance(entry, list):
+#                 entry = entry[0]
+#
+#             day_data = entry.get(str(date), {})
+#             weather_times = day_data.get('weather_times', {})
+#
+#             context['data'] = []
+#
+#             if hour:  # An hour is selected
+#                 hour_data = weather_times.get(hour, {})
+#                 context['data'].append({'date': date_str, 'hour': hour, 'temperature': hour_data.get('temp')})
+#             else:  # No hour is selected, display all hours
+#                 for h, hour_data in weather_times.items():
+#                     context['data'].append({'date': date_str, 'hour': h, 'temperature': hour_data.get('temp')})
+#
+#     return render(request, 'weather_query_template.html', context)
+
+
 
 
 def available_locations(request):
     locations = Location.objects.all().values_list('name', flat=True)
     return JsonResponse({'locations': list(locations)}, safe=False)
-
-
-
-
-
-#Successufly retrieves and posts existing data from the database
-# @api_view(['GET', 'POST'])
-# def weather_query(request):
-#     response_data = {
-#         'status': 'error',
-#         'message': 'An unexpected error occurred.'
-#     }
-#
-#     if request.method == "POST":
-#         location_name = request.data.get('location')
-#         date = request.data.get('date')
-#         hour = request.data.get('hour')  # Hour can be None
-#
-#         location = Location.objects.filter(name=location_name.lower()).first()
-#
-#         if location:
-#             query_results = WeatherData.objects.filter(location=location, date=date)
-#
-#             if query_results.exists():
-#                 entry = query_results.last().data
-#
-#                 # Check if entry is a list and get the first element if it is
-#                 if isinstance(entry, list):
-#                     entry = entry[0]
-#
-#                 date_data = entry.get(date, {}).get('weather_times', {})
-#
-#                 response_data['data'] = []
-#
-#                 for h, hour_data in date_data.items():
-#                     if hour and h.zfill(2) != hour.zfill(2):  # Ensure hour format matches
-#                         continue
-#                     response_data['data'].append({
-#                         'date': date,
-#                         'hour': h.zfill(2),
-#                         'temperature': hour_data.get('temp')
-#                     })
-#
-#                 if response_data['data']:
-#                     response_data['status'] = 'success'
-#                     response_data['message'] = 'Data processed successfully.'
-#                 else:
-#                     response_data['message'] = 'No weather data available for the specified hour.'
-#             else:
-#                 response_data['message'] = 'No weather data available for the specified date and location.'
-#         else:
-#             response_data['message'] = 'Location does not exist.'
-#
-#     return JsonResponse(response_data)
-
-
-
-
-#Modularization of Weather Query Version 2
-# @api_view(['GET', 'POST'])
-# def weather_query(request):
-#     if request.method != "POST":
-#         return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
-#
-#     location_name = request.data.get('location')
-#     date = request.data.get('date')
-#     hour = request.data.get('hour')  # Hour can be None
-#
-#     # Check if location_name is None or empty
-#     if not location_name:
-#         return JsonResponse({'status': 'error', 'message': 'Location is required.'})
-#
-#     location = get_location(location_name)
-#     if not location:
-#         return JsonResponse({'status': 'error', 'message': 'Location does not exist.'})
-#
-#     weather_data = fetch_weather_data(location, date, hour)
-#     if not weather_data:
-#         return JsonResponse({'status': 'error', 'message': 'No weather data available for the specified parameters.'})
-#
-#     return JsonResponse({'status': 'success', 'message': 'Data processed successfully.', 'data': weather_data})
-#
-#
-# def get_location(location_name):
-#     return Location.objects.filter(name=location_name.lower()).first()
-#
-#
-# def fetch_weather_data(location, date, hour):
-#     query_results = WeatherData.objects.filter(location=location, date=date)
-#     if not query_results.exists():
-#         return None
-#
-#     entry = query_results.last().data
-#
-#     # Handling the case where entry is a list
-#     if isinstance(entry, list):
-#         entry = entry[0] if entry else {}
-#
-#     date_data = entry.get(date, {}).get('weather_times', {})
-#
-#     # Filtering and processing logic here
-#     weather_data = []
-#     for h, hour_data in date_data.items():
-#         if hour and h.zfill(2) != hour.zfill(2):  # Ensure hour format matches
-#             continue
-#         weather_data.append({
-#             'date': date,
-#             'hour': h.zfill(2),
-#             'temperature': hour_data.get('temp')
-#         })
-#
-#     return weather_data
-
-
 
 
 # Implement and test the functionality to handle new location queries,
@@ -327,35 +261,6 @@ def weather_query(request):
         return JsonResponse({'status': 'error', 'message': 'No weather data available for the specified parameters.'})
 
     return JsonResponse({'status': 'success', 'message': 'Data processed successfully.', 'data': weather_data})
-
-
-# Enhancing weather_query to accept new locations
-# @api_view(['GET', 'POST'])
-# def weather_query(request):
-#     if request.method != "POST":
-#         return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
-#
-#     location_name = request.data.get('location')
-#     date = request.data.get('date')
-#     hour = request.data.get('hour')  # Hour can be None
-#
-#     # Check if location_name is None or empty
-#     if not location_name:
-#         return JsonResponse({'status': 'error', 'message': 'Location is required.'})
-#
-#     location = get_location(location_name)
-#     # If location does not exist in the database, fetch and save new weather data
-#     if not location:
-#         success = fetch_save_new_weather_data(location_name)
-#         if not success:
-#             return JsonResponse({'status': 'error', 'message': 'Failed to fetch new location data.'})
-#         location = get_location(location_name) # Re-fetch the location after saving new data
-#
-#     weather_data = fetch_weather_data(location, date, hour)
-#     if not weather_data:
-#         return JsonResponse({'status': 'error', 'message': 'No weather data available for the specified parameters.'})
-#
-#     return JsonResponse({'status': 'success', 'message': 'Data processed successfully.', 'data': weather_data})
 
 
 def get_location(location_name):
