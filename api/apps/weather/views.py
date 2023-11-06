@@ -222,6 +222,7 @@ def weather_display(request):
 
 def available_locations(request):
     locations = Location.objects.all().values_list('name', flat=True)
+    print(len(locations))
     return JsonResponse({'locations': list(locations)}, safe=False)
 
 
@@ -303,3 +304,47 @@ def fetch_save_new_weather_data(location):
     WeatherData.objects.create(location=location, data=processed_data)
 
     return processed_data
+
+@api_view(['GET', 'POST'])
+def weather_q(request):
+    if request.method == 'GET':
+        locations = Location.objects.all() #.values_list('name', flat=True)
+        print(len(locations))
+        serializer = LocationSerializer(locations, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
+    if request.method == 'POST':
+        location_name = request.data.get('location')
+        date = request.data.get('date')
+        hour = request.data.get('hour')  # Hour can be None
+
+        temp = get_weather_data(location_name)
+
+        print(temp)
+        # Check if location_name is None or empty
+        # if not location_name:
+        #    return JsonResponse({'status': 'error', 'message': 'Location is required.'})
+
+        location = get_location(location_name)
+        if not location:
+            return JsonResponse({'status': 'error', 'message': 'Location does not exist.'})
+
+        # Check if the weather data for the location is in the database
+        existing_data = WeatherData.objects.filter(location=location)
+
+        if not existing_data.exists():
+            weather_data = fetch_save_new_weather_data(location)
+        else:
+            weather_data = get_weather_data(location)
+
+        weather_data = fetch_weather_data(location, date, hour)
+        if not weather_data:
+            return JsonResponse(
+                {'status': 'error', 'message': 'No weather data available for the specified parameters.'})
+
+        return JsonResponse({'status': 'success', 'message': 'Data processed successfully.', 'data': weather_data})
+
+        #return Response(status=status.HTTP_201_OK)
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})

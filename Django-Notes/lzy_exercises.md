@@ -86,9 +86,7 @@ The JSON data represents weather information structured by date. Each date is a 
 
 Additionally, there is a `weather_times` object that contains hourly weather data. Each hour is represented as a key, and its value is another object containing weather attributes for that specific hour, such as temperature, cloud cover, precipitation, and a weather icon with its description.
 
-### JSON Snippet:
-
-```json
+### JSON Snippet:```json
 [
     {
         "2023-10-25": {
@@ -128,6 +126,8 @@ Additionally, there is a `weather_times` object that contains hourly weather dat
     }
     // ... (more daily data)
 ]
+
+
 ```
 
 This snippet illustrates the hierarchical structure of the data, showing how weather information is organized by date and hour, with detailed attributes for each time period.
