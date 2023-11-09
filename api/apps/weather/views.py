@@ -242,20 +242,20 @@ def weather_query(request):
 
     print(temp)
     # Check if location_name is None or empty
-    #if not location_name:
-    #    return JsonResponse({'status': 'error', 'message': 'Location is required.'})
+    if not location_name:
+       return JsonResponse({'status': 'error', 'message': 'Location is required.'})
 
     location = get_location(location_name)
     if not location:
         return JsonResponse({'status': 'error', 'message': 'Location does not exist.'})
 
     # Check if the weather data for the location is in the database
-    existing_data = WeatherData.objects.filter(location=location)
-
-    if not existing_data.exists():
-        weather_data = fetch_save_new_weather_data(location)
-    else:
-        weather_data = get_weather_data(location)
+    # existing_data = WeatherData.objects.filter(location=location)
+    #
+    # if not existing_data.exists():
+    #     weather_data = fetch_save_new_weather_data(location)
+    # else:
+    #     weather_data = get_weather_data(location)
 
     weather_data = fetch_weather_data(location, date, hour)
     if not weather_data:
@@ -295,15 +295,15 @@ def fetch_weather_data(location, date, hour):
     return weather_data
 
 
-def fetch_save_new_weather_data(location):
-    # Fetch data from the external API
-    fetched_data = fetch_data_from_api(location)  # Assuming you have a function to fetch data from the API
-
-    # Process and save the fetched data in the database
-    processed_data = process_fetched_data(fetched_data)  # Assuming you have a function to process the data
-    WeatherData.objects.create(location=location, data=processed_data)
-
-    return processed_data
+# def fetch_save_new_weather_data(location):
+#     # Fetch data from the external API
+#     fetched_data = fetch_data_from_api(location)  # Assuming you have a function to fetch data from the API
+#
+#     # Process and save the fetched data in the database
+#     processed_data = process_fetched_data(fetched_data)  # Assuming you have a function to process the data
+#     WeatherData.objects.create(location=location, data=processed_data)
+#
+#     return processed_data
 
 
 # @api_view(['GET', 'POST'])

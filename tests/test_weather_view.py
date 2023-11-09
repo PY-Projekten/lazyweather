@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from api.apps.weather.models import Location, WeatherData
-from api.apps.weather.views import get_location, fetch_weather_data
+from api.apps.weather.views import get_location, fetch_weather_data, weather_query
 from unittest.mock import patch, MagicMock
 from datetime import datetime, date
 #from api.apps.weather.views import weather_q
@@ -188,24 +188,21 @@ class FetchWeatherDataTest(TestCase):
 
 
 
-# Test class for the 'fetch_save_new_weather_data' utility function
-class FetchSaveNewWeatherDataTest(TestCase):
-#     # ... setUp and tearDown methods if needed ...
-#
-#     def test_fetch_save_new_weather_data(self):
-#                 # Test to ensure fetch_save_new_weather_data fetches and saves data correctly
-#
-#     # ... additional tests for the fetch_save_new_weather_data function ...
 
 # Test class for the 'weather_query' API endpoint
-# class WeatherQueryTest(TestCase):
-#     @classmethod
-#     def setUpClass(cls):
-#         super().setUpClass()
-#         cls.client = Client()
-#         cls.url = reverse('weather_query')
-#
-#     # ... setUp and tearDown methods if needed ...
+class WeatherQueryTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.client = Client()
+        cls.url = reverse('weather_query')
+
+
+    @classmethod
+    def tearDownClass(cls):
+        # Clean up after all tests have run
+        cls.location.delete()
+        super().tearDownClass()
 #
 #     def test_weather_query_get_method(self):
 #         # Test to ensure the GET method of weather_query endpoint works correctly
