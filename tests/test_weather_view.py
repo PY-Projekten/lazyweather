@@ -203,7 +203,8 @@ class WeatherQueryTest(TestCase):
         # Clean up after all tests have run
         cls.location.delete()
         super().tearDownClass()
-#
+
+    @patch('api.apps.weather.views.request.data.get')
 #     def test_weather_query_get_method(self):
 #         # Test to ensure the GET method of weather_query endpoint works correctly
 #

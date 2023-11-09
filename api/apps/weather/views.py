@@ -226,42 +226,34 @@ def available_locations(request):
     return JsonResponse({'locations': list(locations)}, safe=False)
 
 
-# Implement and test the functionality to handle new location queries,
-# fetch the corresponding weather data from an external API,
-# update the database, and display the results on the frontend.
+# ** weather_query Version 2: refactored for unit-testing **
+##
 @api_view(['GET', 'POST'])
 def weather_query(request):
+    # Ensure only POST requests are handled
     if request.method != "POST":
-        return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+    # Extract and validate request data
     location_name = request.data.get('location')
     date = request.data.get('date')
     hour = request.data.get('hour')  # Hour can be None
 
-    temp = get_weather_data(location_name)
-
-    print(temp)
     # Check if location_name is None or empty
     if not location_name:
-       return JsonResponse({'status': 'error', 'message': 'Location is required.'})
+       return JsonResponse({'status': 'error', 'message': 'Location is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
+    # Now we can safely call get_weather_data
+    temp = get_weather_data(location_name)
     location = get_location(location_name)
     if not location:
-        return JsonResponse({'status': 'error', 'message': 'Location does not exist.'})
-
-    # Check if the weather data for the location is in the database
-    # existing_data = WeatherData.objects.filter(location=location)
-    #
-    # if not existing_data.exists():
-    #     weather_data = fetch_save_new_weather_data(location)
-    # else:
-    #     weather_data = get_weather_data(location)
+        return JsonResponse({'status': 'error', 'message': 'Location does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 
     weather_data = fetch_weather_data(location, date, hour)
     if not weather_data:
-        return JsonResponse({'status': 'error', 'message': 'No weather data available for the specified parameters.'})
+        return JsonResponse({'status': 'error', 'message': 'No weather data available for the specified parameters.'}, status=status.HTTP_404_NOT_FOUND)
 
-    return JsonResponse({'status': 'success', 'message': 'Data processed successfully.', 'data': weather_data})
+    return JsonResponse({'status': 'success', 'message': 'Data processed successfully.', 'data': weather_data}, status=status.HTTP_200_OK)
 
 
 def get_location(location_name):
