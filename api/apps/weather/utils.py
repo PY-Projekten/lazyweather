@@ -9,6 +9,7 @@ from .models import Location, WeatherData
 import django.utils.timezone
 from rest_framework import serializers
 
+
 retry_strategy = Retry(
     total=10,
     status_forcelist=[429, 500, 502, 503, 504],
@@ -28,65 +29,54 @@ def get_icon_by_weathercode(weathercode):
     weather_description = WEATHER_DESCRIPTION[weathercode]
     return WEATHER_ICONS[weather_description]
 
+class LocationNotFoundError(Exception):
+    """Exception raised when a location is not found."""
+    pass
 
+
+# Version: Updating existing records (new dates for locations; current dates)
 # def get_weather_data(location, days=7):
 #     print("get_weather_data function called")
 #     """
-#     Return daily weather data from open-meteo.com starting today
-#     Receive the location as a parameter and returns the weather of it
+#     Return daily weather data from open-meteo.com starting today.
+#     Receive the location as a parameter and returns the weather of it.
 #     :param location: Address
 #     :param days: Number of days(max = 7)
 #     :return: Daily weather data in list form
 #     """
 #     geoloc = geolocator.geocode(location)
-#     address = None
-#     #if location:
-#     #    address = location.address
-#     #    print(location.address)
 #     latitude = "%.2f" % geoloc.latitude
 #     longitude = "%.2f" % geoloc.longitude
 #     db_location = Location.objects.filter(longitude=longitude, latitude=latitude).first()
 #
+#     # Check if the location already exists in the database
 #     if db_location is None:
 #         db_location = Location.objects.create(longitude=longitude, latitude=latitude, name=location.lower())
-#     # try:
-#     #
-#     #
-#     #
-#     # except:
-#     #     location = Location.objects.create(longitude=longitude, latitude=latitude)
-#     #     location.save()
 #
-#     print(location)
-#     qr = []
+#     # Check if the weather data for the location is up-to-date
+#     date = django.utils.timezone.now()
+#     data = WeatherData.objects.filter(location=db_location.id, date=date).first()
+#     if data is not None:
+#         print('Data retrieved from database', data.data)
+#         return data.data  # Return the data from the database if it's up-to-date
+#
+#     # If data is not in the database, fetch it from the API
+#     qr = []  # Initialize the query result variable
 #     try:
-#         date = django.utils.timezone.now()
-#         data = WeatherData.objects.filter(location=db_location.id, date=date).first()
-#         if data is not None:
-#             print('from database', data.data)
-#             qr = data.data
-#
-#         print('from API')
+#         print('Data retrieved from API')
 #         http = requests.Session()
-#
-#         # Mount it for both http and https usage
-#         # adapter = HTTPAdapter()
-#
 #         http.mount("https://", adapter)
 #         http.mount("https://", adapter)
 #         start_date = datetime.date.today()
 #         end_date = datetime.date.today() + datetime.timedelta(days)
-#         # Debugging of API request
-#         print("Before API request")
+#
 #         r = http.get(
 #             f'https://api.open-meteo.com/v1/forecast?latitude={latitude}&longitude={longitude}'
 #             f'&start_date={start_date}&end_date={end_date}'
 #             f'&current_weather=True'
 #             f'&hourly=temperature_2m,precipitation,snowfall,weathercode,cloudcover'
 #             f'&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum&timezone=Europe%2FBerlin')
-#         print("After API request")
-#         # Printing the raw JSON response from the API
-#         print(f"API Response: {r.json()}")
+#
 #         data = r.json()
 #         current_data = data['current_weather']
 #         hourly_data = data['hourly']
@@ -106,10 +96,7 @@ def get_icon_by_weathercode(weathercode):
 #                     'snowfall': hourly_data['snowfall'][j + offset],
 #                     'weathercode': w_code,
 #                     'weather_icon': icon,
-#
 #                 }
-#             # Save each day’s data to the database here
-#             WeatherData.objects.create(location=db_location, data=daily_weather_data_list[i], date=daily_data['time'][i])
 #
 #             daily_weather_data = {
 #                 daily_data['time'][i]: {
@@ -123,8 +110,12 @@ def get_icon_by_weathercode(weathercode):
 #             }
 #
 #             daily_weather_data_list.append(daily_weather_data)
-#         WeatherData.objects.create(location=db_location, data=daily_weather_data_list)
-#         qr = daily_weather_data_list
+#
+#         # Modification 3: Save all the days' data to the database at once
+#         WeatherData.objects.create(location=db_location, data=daily_weather_data_list, date=date)
+#
+#         qr = daily_weather_data_list  # Assign the processed data to qr
+#
 #     except Exception as e:
 #         print(e)
 #     return qr
@@ -135,7 +126,7 @@ def get_icon_by_weathercode(weathercode):
 
 
 
-# Version: Updating existing records (new dates for locations; current dates)
+# Identify the External API's Response for Non-Existent Locations
 def get_weather_data(location, days=7):
     print("get_weather_data function called")
     """
@@ -146,6 +137,11 @@ def get_weather_data(location, days=7):
     :return: Daily weather data in list form
     """
     geoloc = geolocator.geocode(location)
+    if geoloc is None:
+        # Location not found, raise an exception or return an error
+        print(f"Location '{location}' not found in geolocation lookup.")
+        raise LocationNotFoundError(f"Location '{location}' not found.")
+
     latitude = "%.2f" % geoloc.latitude
     longitude = "%.2f" % geoloc.longitude
     db_location = Location.objects.filter(longitude=longitude, latitude=latitude).first()
@@ -179,6 +175,11 @@ def get_weather_data(location, days=7):
             f'&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum&timezone=Europe%2FBerlin')
 
         data = r.json()
+
+        # Check if the response indicates that the location is not found
+        if 'error' in data:  # Replace 'error' with the actual key or condition that indicates a location error
+            raise LocationNotFoundError(f"Location '{location}' not found.")
+
         current_data = data['current_weather']
         hourly_data = data['hourly']
         daily_data = data['daily']
@@ -217,6 +218,10 @@ def get_weather_data(location, days=7):
 
         qr = daily_weather_data_list  # Assign the processed data to qr
 
+        # existing code to process and return the data...
+    except LocationNotFoundError as e:
+        # Handle the location not found error
+        raise e
     except Exception as e:
         print(e)
     return qr
@@ -224,4 +229,3 @@ def get_weather_data(location, days=7):
 
 if __name__ == '__main__':
     get_weather_data('berlin')
-

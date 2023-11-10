@@ -6,13 +6,14 @@ from .models import *
 from .serializers import LocationSerializer, WeatherDataSerializer
 from django.shortcuts import render
 from .forms import WeatherQueryForm
-from .utils import get_weather_data
+from .utils import get_weather_data, LocationNotFoundError
 import logging
 from datetime import datetime
 logger = logging.getLogger(__name__)
 from django.http import JsonResponse
 #from .exceptions import ExternalAPIError
 from requests.exceptions import RequestException
+
 
 
 
@@ -285,19 +286,20 @@ def weather_query(request):
        return JsonResponse({'status': 'error', 'message': 'Location is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        # get_weather_data(location_name)
+        # Now we can safely call get_weather_data
+        get_weather_data(location_name)
         location = get_location(location_name)
         if not location:
-            # If the location does not exist, attempt to get weather data from the external API
-            weather_data = get_weather_data(location_name)
-            if weather_data is None:
-                # If the external API also does not have the location, return a 404 error
-                return JsonResponse({'status': 'error', 'message': 'Location does not exist.'}, status=status.HTTP_404_NOT_FOUND)
-            # If the external API returns data, you can choose to add it to your database here
-        else:
-            weather_data = fetch_weather_data(location, date, hour)
-            if not weather_data:
-                return JsonResponse({'status': 'error', 'message': 'No weather data available for the specified parameters.'}, status=status.HTTP_404_NOT_FOUND)
+            return JsonResponse({'status': 'error', 'message': 'Location does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+
+        weather_data = fetch_weather_data(location, date, hour)
+        if not weather_data:
+            return JsonResponse({'status': 'error', 'message': 'No weather data available for the specified parameters.'}, status=status.HTTP_404_NOT_FOUND)
+
+    except LocationNotFoundError as e:
+        # Handle location not found error
+        logger.error(f"LocationNotFoundError caught: {e}")
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=status.HTTP_404_NOT_FOUND)
 
     #except ExternalAPIError as e:
     except RequestException as e:
@@ -307,7 +309,7 @@ def weather_query(request):
     except Exception as e:
         # Handle unexpected errors
         logger.error(f"Unexpected error occurred: {e}")
-        return JsonResponse({'status': 'error', 'message': 'An unexpected error occurred'},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return JsonResponse({'status': 'error', 'message': 'An unexpected error occured'},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     return JsonResponse({'status': 'success', 'message': 'Data processed successfully.', 'data': weather_data}, status=status.HTTP_200_OK)
 
