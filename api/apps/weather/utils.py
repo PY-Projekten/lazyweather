@@ -144,6 +144,8 @@ def get_weather_data(location, days=7):
 
     latitude = "%.2f" % geoloc.latitude
     longitude = "%.2f" % geoloc.longitude
+
+    # Check if location exists in the database
     db_location = Location.objects.filter(longitude=longitude, latitude=latitude).first()
 
     # Check if the location already exists in the database
