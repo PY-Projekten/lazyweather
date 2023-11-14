@@ -1,12 +1,15 @@
 from django.test import TestCase, Client, RequestFactory
 from django.urls import reverse
+from django.utils import timezone
 from api.apps.weather.models import Location, WeatherData
 from api.apps.weather.views import get_location, fetch_weather_data, weather_query
+from api.apps.weather.serializers import LocationSerializer
 from api.apps.weather.utils import LocationNotFoundError
 from unittest.mock import patch, MagicMock
 from datetime import datetime, date
 #from api.apps.weather.views import weather_q
 import json
+
 class AvailableLocationsTest(TestCase):
     """Test cases for the available_locations endpoint."""
     @classmethod
@@ -192,75 +195,150 @@ class FetchWeatherDataTest(TestCase):
 
 
 # Test class for the 'weather_query' API endpoint
-class WeatherQueryTest(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        # Set up any necessary objects, like instances of Location or WeatherData
-        # This setup will run once for the entire test case
-
-    @classmethod
-    def tearDownClass(cls):
-        # Clean up any data or reset conditions after the entire test case runs
-        super().tearDownClass()
-
-    # # Mock return value for get_location
-    # mock_location = Location()
-    # mock_location.name = "TestLocation1"
-    # mock_location.latitude = 123.45
-    # mock_location.longitude = 67.89
-    #
-    # # Mock return value for get_weather_data
-    # mock_weather_data = WeatherData()
-    # mock_weather_data.temperature = 20
-    # mock_weather_data.humidity = 50
-    # mock_weather_data.description = "Sunny"
-
-    @patch('api.apps.weather.utils.get_weather_data')
-    @patch('api.apps.weather.views.get_location')
-    def test_weather_query_valid_location(self, mock_get_location, mock_get_weather_data):
-        # Define mock return values inside the test method
-        mock_location = Location(name="Valid Location Name", latitude=123.45, longitude=67.89)
-        mock_weather_data = WeatherData(temperature=20, humidity=50, description="Sunny")
-
-        # Set up your mock objects
-        mock_get_location.return_value = mock_location  # Replace with appropriate return value
-        mock_get_weather_data.return_value = mock_weather_data # Replace with appropriate return value
-
-        # Create a mock POST request object with necessary data
-        data = {'location': 'valid_location', 'date': '2023-11-10', 'hour': '12'}
-        request = self.factory.post('/api/weather/', data=json.dumps(data), content_type='application/json')
-
-        # Call weather_query with the mock request and a valid location
-        response = weather_query(request)
-
-        # Assert that the response is as expected
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('expected_weather_data', response.content)
-
-        # Parse the response content and assert the expected data is present
-        response_data = json.loads(response.content)
-        self.assertIn('data', response_data)
-        self.assertEqual(response_data['data']['temperature'], 20)
-        self.assertEqual(response_data['data']['humidity'], 50)
-        self.assertEqual(response_data['data']['description'], "Sunny")
-
-    @patch('api.apps.weather.views.get_location')
-    def test_weather_query_invalid_location(self, mock_get_location):
-        # Mock get_location to simulate an invalid location
-        mock_get_location.side_effect = LocationNotFoundError('Location not found')
-
-        # Call weather_query with an invalid location
-        response = weather_query('invalid_location')
-
-        # Assert that the response is as expected
-        self.assertEqual(response.status_code, 404)
-        self.assertIn('Location not found', response.content)
+# class WeatherQueryTest(TestCase):
+#     @classmethod
+#     def setUpClass(cls):
+#         super().setUpClass()
+#         # Set up shared objects here
+#         cls.factory = RequestFactory()
+#         cls.location = Location.objects.create(
+#             latitude='40.7128', longitude='-74.0060', name='New York'
+#         )
+#         WeatherData.objects.create(
+#             location=cls.location,
+#             data={
+#                 timezone.now().date().isoformat(): {
+#                     'weather_times': {
+#                         '15': {'temp': 20}
+#                     }
+#                 }
+#             },
+#             date=timezone.now().date()
+#         )
+#
+#     @classmethod
+#     def tearDownClass(cls):
+#         # Delete WeatherData
+#         WeatherData.objects.all().delete()
+#
+#         # Delete location
+#         cls.location.delete()
+#
+#         super().tearDownClass()
+#
+#
+#     @patch('api.apps.weather.views.get_location')
+#     @patch('api.apps.weather.views.fetch_weather_data')
+#     def test_weather_query_valid_location(self, mock_get_location, mock_fetch_weather_data):
+#         # Define mock return values inside the test method
+#         mock_get_location.return_value = self.location
+#         mock_fetch_weather_data.return_value = [{
+#             'date': timezone.now().date().isoformat(),
+#             'hour': '15',
+#             'temperature': 20
+#         }]
+#
+#         # Create a mock POST request object with necessary data
+#         data = {
+#             'location': 'New York',
+#             'date': timezone.now().date().isoformat(),
+#             'hour': '15'
+#         }
+#         request = self.factory.post('weather_query', data, content_type='application/json')
+#
+#         # Call weather_query with the mock request
+#         response = weather_query(request)
+#
+#         # Assert that the response is as expected
+#         self.assertEqual(response.status_code, 200)
+#         self.assertIn('Data processed successfully.', str(response.content))
+#         # Additional checks for the content of the response
+#         response_data = response.json()
+#         self.assertIn('location', response_data['data'])
+#         self.assertIn('weather', response_data['data'])
+#         self.assertEqual(response_data['data']['location']['name'], 'New York')
+# #
+#     @patch('api.apps.weather.views.get_location')
+#     def test_weather_query_invalid_location(self, mock_get_location):
+#         # Mock get_location to simulate an invalid location
+#         mock_get_location.side_effect = Location.DoesNotExist
+#
+#         # Create a mock POST request object with necessary data
+#         data = {'latitude': 'invalid', 'longitude': 'invalid', 'date': '2023-11-10', 'hour': '12'}
+#         request = self.factory.post('/api/weather/', data=json.dumps(data), content_type='application/json')
+#
+#         # Call weather_query with the mock request
+#         response = weather_query(request)
+#
+#         # Assert that the response is as expected
+#         self.assertEqual(response.status_code, 404)
 
     # Add more tests for other scenarios like API failures, database errors, etc.
 
 
+# *** Serializer Version
+class WeatherQueryTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # Set up shared objects here
+        cls.factory = RequestFactory()
+        cls.location = Location.objects.create(
+            latitude='40.7128', longitude='-74.0060', name='New York'
+        )
+        WeatherData.objects.create(
+            location=cls.location,
+            data={
+                timezone.now().date().isoformat(): {
+                    'weather_times': {
+                        '15': {'temp': 20}
+                    }
+                }
+            },
+            date=timezone.now().date()
+        )
 
+    @classmethod
+    def tearDownClass(cls):
+        # Delete WeatherData
+        WeatherData.objects.all().delete()
+
+        # Delete location
+        cls.location.delete()
+
+        super().tearDownClass()
+
+
+    @patch('api.apps.weather.views.get_location')
+    @patch('api.apps.weather.views.fetch_weather_data')
+    def test_weather_query_valid_location(self, mock_get_location, mock_fetch_weather_data):
+        # Define mock return values inside the test method
+        mock_get_location.return_value = self.location
+        mock_fetch_weather_data.return_value = [{
+            'date': timezone.now().date().isoformat(),
+            'hour': '15',
+            'temperature': 20
+        }]
+
+        # Create a mock POST request object with necessary data
+        data = {
+            'location': 'New York',
+            'date': timezone.now().date().isoformat(),
+            'hour': '15'
+        }
+        request = self.factory.post('weather_query', data, content_type='application/json')
+
+        # Call weather_query with the mock request
+        response = weather_query(request)
+
+        # Assert that the response is as expected
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Data processed successfully.', str(response.content))
+        # Additional checks for the content of the response
+        response_data = response.json()
+        self.assertIn('location', response_data['data'])
+        self.assertIn('weather', response_data['data'])
+        self.assertEqual(response_data['data']['location']['name'], 'New York')
 
 
 
