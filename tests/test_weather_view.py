@@ -9,6 +9,7 @@ from unittest.mock import patch, MagicMock
 from datetime import datetime, date
 #from api.apps.weather.views import weather_q
 import json
+import logging
 
 class AvailableLocationsTest(TestCase):
     """Test cases for the available_locations endpoint."""
@@ -297,6 +298,9 @@ class WeatherQueryTest(TestCase):
             },
             date=timezone.now().date()
         )
+        # Set up logging
+        logging.basicConfig(level=logging.DEBUG)
+        cls.logger = logging.getLogger(__name__)
 
     @classmethod
     def tearDownClass(cls):
@@ -309,16 +313,18 @@ class WeatherQueryTest(TestCase):
         super().tearDownClass()
 
 
-    @patch('api.apps.weather.views.get_location')
     @patch('api.apps.weather.views.fetch_weather_data')
+    @patch('api.apps.weather.views.get_location')
     def test_weather_query_valid_location(self, mock_get_location, mock_fetch_weather_data):
         # Define mock return values inside the test method
         mock_get_location.return_value = self.location
+
         mock_fetch_weather_data.return_value = [{
             'date': timezone.now().date().isoformat(),
             'hour': '15',
             'temperature': 20
         }]
+
 
         # Create a mock POST request object with necessary data
         data = {
@@ -331,14 +337,26 @@ class WeatherQueryTest(TestCase):
         # Call weather_query with the mock request
         response = weather_query(request)
 
+        # Inspect the response content
+        response_content = response.content.decode('utf-8')
+        self.logger.debug("Response content: %s", response_content)
+
+
         # Assert that the response is as expected
         self.assertEqual(response.status_code, 200)
         self.assertIn('Data processed successfully.', str(response.content))
-        # Additional checks for the content of the response
-        response_data = response.json()
-        self.assertIn('location', response_data['data'])
-        self.assertIn('weather', response_data['data'])
-        self.assertEqual(response_data['data']['location']['name'], 'New York')
+        # # Additional checks for the content of the response
+        #print('R: ', json.dumps(response))
+        response_content = json.loads(response_content)
+        self.assertIn('location', response_content['data'])
+        self.assertIn('weather', response_content['data'])
+        #
+        # New: Verify the structure and content of the serialized location
+        serialized_location = LocationSerializer(response_content['data']['location']).data
+        print(serialized_location)
+        self.assertEqual(serialized_location['name'], 'New York')
+        self.assertEqual(serialized_location['latitude'], '40.7128')
+        self.assertEqual(serialized_location['longitude'], '-74.0060')
 
 
 

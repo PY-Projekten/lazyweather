@@ -334,6 +334,7 @@ def available_locations(request):
 # ** Fixing Assertion Error
 @api_view(['POST'])
 def weather_query(request):
+    print("Received request data:", request.data)
     # Ensure only POST requests are handled
     if request.method != "POST":
         return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -351,14 +352,19 @@ def weather_query(request):
         # Now we can safely call get_weather_data
         get_weather_data(location_name)
         location = get_location(location_name)
+        print("Output from get_location:", location)
         if not location:
             return JsonResponse({'status': 'error', 'message': 'Location does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 
         # Serialize the location object
+        print("Type of location:", type(location))
+        print("Content of location:", location)
         location_serialized = LocationSerializer(location).data
+        print("Serialized location data:", location_serialized)
 
         # Now we can safely call get_weather_data
         weather_data = fetch_weather_data(location, date, hour)
+        print("Output from fetch_weather_data:", weather_data)
         if not weather_data:
             return JsonResponse({'status': 'error', 'message': 'No weather data available for the specified parameters.'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -375,13 +381,15 @@ def weather_query(request):
     except Exception as e:
         # Handle unexpected errors
         logger.error(f"Unexpected error occurred: {e}")
-        return JsonResponse({'status': 'error', 'message': 'An unexpected error occured'},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return JsonResponse({'status': e, 'message': 'An unexpected error occured'},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     # Combine location data with weather data
     response_data = {
-        'location': location_serialized,
-        'weather': weather_data
-    }
+            'location': location_serialized,
+            'weather': weather_data
+        }
+
+    print("Final response data:", response_data)
     logger.debug(f"Response data: {response_data}")
     return JsonResponse({'status': 'success', 'message': 'Data processed successfully.', 'data': response_data}, status=status.HTTP_200_OK)
 
@@ -439,6 +447,9 @@ def weather_query(request):
 
 
 def get_location(location_name):
+    print(location_name)
+    location = Location.objects.filter(name=location_name.lower()).first()
+    print('L: ', dir(location))
     return Location.objects.filter(name=location_name.lower()).first()
 
 
