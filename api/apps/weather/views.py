@@ -275,63 +275,9 @@ def available_locations(request):
 #     return JsonResponse({'status': 'success', 'message': 'Data processed successfully.', 'data': weather_data}, status=status.HTTP_200_OK)
 
 
-#** Serializer Version weather_query **
-# @api_view(['POST'])
-# def weather_query(request):
-#     # Ensure only POST requests are handled
-#     if request.method != "POST":
-#         return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-#
-#     # Extract and validate request data
-#     location_name = request.data.get('location')
-#     date = request.data.get('date')
-#     hour = request.data.get('hour')  # Hour can be None
-#
-#     # Check if location_name is None or empty
-#     if not location_name:
-#        return JsonResponse({'status': 'error', 'message': 'Location is required.'}, status=status.HTTP_400_BAD_REQUEST)
-#
-#     try:
-#         # Now we can safely call get_weather_data
-#         get_weather_data(location_name)
-#         location = get_location(location_name)
-#         if not location:
-#             return JsonResponse({'status': 'error', 'message': 'Location does not exist.'}, status=status.HTTP_404_NOT_FOUND)
-#
-#         # Serialize the location object
-#         location_serialized = LocationSerializer(location).data
-#
-#         # Now we can safely call get_weather_data
-#         weather_data = fetch_weather_data(location, date, hour)
-#         if not weather_data:
-#             return JsonResponse({'status': 'error', 'message': 'No weather data available for the specified parameters.'}, status=status.HTTP_404_NOT_FOUND)
-#
-#     except LocationNotFoundError as e:
-#         # Handle location not found error
-#         logger.error(f"LocationNotFoundError caught: {e}")
-#         return JsonResponse({'status': 'error', 'message': str(e)}, status=status.HTTP_404_NOT_FOUND)
-#
-#     #except ExternalAPIError as e:
-#     except RequestException as e:
-#         # Handle specific known error (e.g., ExternalAPIError is a custom exception)
-#         logger.error(f"Request error occurred: {e}")
-#         return JsonResponse({'status': 'error', 'message': 'Failed to retrieve weather data due to an external error.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-#     except Exception as e:
-#         # Handle unexpected errors
-#         logger.error(f"Unexpected error occurred: {e}")
-#         return JsonResponse({'status': 'error', 'message': 'An unexpected error occured'},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-#
-#     # Combine location data with weather data
-#     response_data = {
-#         'location': location_serialized,
-#         'weather': weather_data
-#     }
-#     logger.debug(f"Response data: {response_data}")
-#     return JsonResponse({'status': 'success', 'message': 'Data processed successfully.', 'data': response_data}, status=status.HTTP_200_OK)
 
 
-
-# ** Fixing Assertion Error
+# ** Fixed Assertion Error
 @api_view(['POST'])
 def weather_query(request):
     print("Received request data:", request.data)
