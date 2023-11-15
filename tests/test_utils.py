@@ -3,6 +3,8 @@ from unittest.mock import patch, MagicMock
 from api.apps.weather.utils import get_weather_data, LocationNotFoundError
 from django.utils import timezone
 from api.apps.weather.models import Location, WeatherData
+import pytest
+
 
 class GetWeatherDataTest(unittest.TestCase):
 
@@ -24,6 +26,7 @@ class GetWeatherDataTest(unittest.TestCase):
 
     @patch('api.apps.weather.utils.geolocator.geocode')
     @patch('api.apps.weather.utils.requests.Session')
+    @pytest.mark.django_db
     def test_successful_data_retrieval(self, mock_session, mock_geocode):
         # Mock the geocode and API call responses
         mock_geocode.return_value = MagicMock(latitude=52.52, longitude=13.41)
@@ -50,6 +53,7 @@ class GetWeatherDataTest(unittest.TestCase):
 
     @patch('api.apps.weather.utils.geolocator.geocode')
     @patch('api.apps.weather.utils.requests.Session')
+    @pytest.mark.django_db
     def test_database_interaction(self, mock_session, mock_geocode):
         # Mock the geocode and API call responses
         mock_geocode.return_value = MagicMock(latitude=52.52, longitude=13.41)
