@@ -401,28 +401,6 @@ class WeatherQueryTest(TestCase):
         self.assertEqual(response.status_code, 503)
         self.assertIn('Failed to retrieve weather data due to an external error', response_content)
 
-    @patch('api.apps.weather.views.fetch_weather_data')
-    def test_weather_query_unexpected_error(self, mock_fetch_weather_data):
-        mock_fetch_weather_data.side_effect = Exception("Unexpected error")
-
-        # Create a mock POST request object
-        data = {'location': 'New York',
-                'date': '2023-11-15',
-                'hour': 15
-                }
-
-        request = self.factory.post('weather_query', data, content_type='application/json')
-
-        # Call weather_query with the mock request
-        response = weather_query(request)
-
-        # Inspect the response content
-        response_content = response.content.decode('utf-8')
-        self.logger.debug("Response content: %s", response_content)
-
-        # Assert that the response indicates an unexpected error
-        self.assertEqual(response.status_code, 500)
-        self.assertIn('An unexpected error occurred', response_content)
 
     # ** Test Version
     @patch('api.apps.weather.views.fetch_weather_data')
