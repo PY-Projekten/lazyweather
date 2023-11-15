@@ -327,7 +327,7 @@ def weather_query(request):
     except Exception as e:
         # Handle unexpected errors
         logger.error(f"Unexpected error occurred: {e}")
-        return JsonResponse({'status': e, 'message': 'An unexpected error occured'},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return JsonResponse({'status': 'error', 'message': 'An unexpected error occurred'},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     # Combine location data with weather data
     response_data = {
