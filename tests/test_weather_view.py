@@ -308,19 +308,8 @@ class WeatherQueryTest(TestCase):
 
         # Assert that the response indicates an error due to invalid location
         self.assertEqual(response.status_code, 404)
-        self.assert.assertIn('Location does not exist', str(response.content))
-        # # Additional checks for the content of the response
-        # print('R: ', json.dumps(response))
-        response_content = json.loads(response_content)
-        self.assertIn('location', response_content['data'])
-        self.assertIn('weather', response_content['data'])
-        #
-        # New: Verify the structure and content of the serialized location
-        serialized_location = LocationSerializer(response_content['data']['location']).data
-        print(serialized_location)
-        self.assertEqual(serialized_location['name'], 'New York')
-        self.assertEqual(serialized_location['latitude'], '40.7128')
-        self.assertEqual(serialized_location['longitude'], '-74.0060')
+        self.assertIn("Location 'InvalidLocation' not found", response_content)
+
 
 
     # @patch('api.apps.weather.views.get_location')
