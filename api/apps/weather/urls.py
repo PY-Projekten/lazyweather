@@ -5,8 +5,9 @@ from api.views import get_weather
 from .views import weather_list, weather_display, weather_query, get_weather_by_location, available_locations
 
 urlpatterns = [
-    path('location/', location_list),
-    re_path('location/(?P<pk>[0-9]+)/$', location_detail),
+    path('weather/location/list/', location_list),
+    re_path('weather/location/(?P<pk>[0-9]+)/access$', location_detail),
+    #re_path('weather/location/(?P<pk>[0-9]+)/update', location_detail),
     path('weather-data/', weather_list),
     re_path('weather-data/(?P<pk>[0-9]+)/$', weather_detail),
     re_path('weather-data/(?P<location>\w+)/$', get_weather_by_location),
