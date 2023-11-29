@@ -222,11 +222,18 @@ def weather_display(request):
 
 
 
+## Original Version: available_locations
+# def available_locations(request):
+#     locations = Location.objects.all().values_list('name', flat=True)
+#     print(len(locations))
+#     return JsonResponse({'locations': list(locations)}, safe=False)
 
+## Modified Test Version: available_locations
 def available_locations(request):
-    locations = Location.objects.all().values_list('name', flat=True)
-    print(len(locations))
+    locations = Location.objects.all().values('id', 'name', 'latitude', 'longitude')
     return JsonResponse({'locations': list(locations)}, safe=False)
+
+
 
 
 
