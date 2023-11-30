@@ -31,38 +31,91 @@ def location_list(request):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+# ***Original Version: location_detail***
+# @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
+# def location_detail(request, pk):
+#     """
+#     API view zum Abrufen, Aktualisieren oder Löschen eines Orts.
+#     """
+#     try:
+#         location = Location.objects.get(pk=pk)
+#     except ObjectDoesNotExist:
+#         return Response(status=status.HTTP_404_NOT_FOUND)
+#
+#     if request.method == "GET":
+#         serializer = LocationSerializer(location)
+#         return Response(serializer.data)
+#
+#     elif request.method == "PUT":
+#         serializer = LocationSerializer(location, data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#
+#     elif request.method == "PATCH":
+#         serializer = LocationSerializer(location, data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_206_PARTIAL_CONTENT)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#
+#     elif request.method == "DELETE":
+#         location.delete()
+#         return Response(status=status.HTTP_204_NO_CONTENT)
+
+# ***Modified location_detail: prepped for unit tests***
 
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
 def location_detail(request, pk):
-    """
-    API view zum Abrufen, Aktualisieren oder Löschen eines Orts.
-    """
+    print("Received request data for location detail:", request.data)
+
     try:
         location = Location.objects.get(pk=pk)
-    except ObjectDoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+    except Location.DoesNotExist:
+        logger.error(f"Location with pk {pk} not found")
+        return Response({
+            'status': 'error',
+            'message': 'Location not found.'
+        }, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == "GET":
         serializer = LocationSerializer(location)
-        return Response(serializer.data)
+        return Response({
+            'status': 'success',
+            'message': 'Location retrieved successfully.',
+            'data': serializer.data
+        })
 
-    elif request.method == "PUT":
-        serializer = LocationSerializer(location, data=request.data)
+    elif request.method in ["PUT", "PATCH"]:
+        serializer = LocationSerializer(location, data=request.data, partial=(request.method == "PATCH"))
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    elif request.method == "PATCH":
-        serializer = LocationSerializer(location, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_206_PARTIAL_CONTENT)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            updated_location = Location.objects.get(pk=pk)
+            print("Updated location:", updated_location)
+            return Response({
+                'status': 'success',
+                'message': 'Location updated successfully.',
+                'data': serializer.data
+            }, status=status.HTTP_200_OK if request.method == "PUT" else status.HTTP_206_PARTIAL_CONTENT)
+        logger.error(f"Error in updating location: {serializer.errors}")
+        return Response({
+            'status': 'error',
+            'message': 'Error updating location.',
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
 
     elif request.method == "DELETE":
         location.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    else:
+        logger.error(f"Invalid request method: {request.method}")
+        return Response({
+            'status': 'error',
+            'message': 'Invalid request method.'
+        }, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
 
 @api_view(['GET', 'POST'])
@@ -217,11 +270,23 @@ def weather_display(request):
 #     return render(request, 'weather_query_template.html', context)
 
 
+## Original Version: available_locations (still relevant for WeatherQueryOne & WeatherQueryVueTwo
+# def available_locations(request):
+#     locations = Location.objects.all().values_list('name', flat=True)
+#     print(len(locations))
+#     return JsonResponse({'locations': list(locations)}, safe=False)
 
 
+# Modified Test Version: available_locations (WeatherQueryVueTwo)
+@api_view(['GET'])
 def available_locations(request):
     locations = Location.objects.all().values('id', 'name', 'latitude', 'longitude')
     return JsonResponse({'locations': list(locations)}, safe=False)
+
+
+@api_view(['GET'])
+def schema_locations(request):
+    return Response(Location.schema(), status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])

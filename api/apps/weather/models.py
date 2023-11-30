@@ -20,6 +20,15 @@ class Location(models.Model):
             return self.name
         return f'{self.longitude}-{self.latitude}'
 
+    @staticmethod
+    def schema():
+        return {
+           'name': 'str',
+           'latitude': 'float',
+           'longitude': 'float',
+
+        }
+
     def __repr__(self):
         return self.name
 
