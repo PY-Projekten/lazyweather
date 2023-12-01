@@ -77,10 +77,26 @@ def location_detail(request, pk):
             'errors': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
 
+    # elif request.method == "DELETE":
+    #     location.delete()
+    #     logger.info(f"Location with pk {pk} deleted successufully")
+    #     return Response(status=status.HTTP_204_NO_CONTENT)
+
     elif request.method == "DELETE":
-        location.delete()
-        logger.info(f"Location with pk {pk} deleted successufully")
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        try:
+            location = Location.objects.get(pk=pk)
+            location.delete()
+            logger.info(f"Location with pk {pk} deleted successfully.")
+            return Response({
+                'status': 'success',
+                'message': 'Location deleted successfully.'
+            }, status=status.HTTP_204_NO_CONTENT)
+        except Location.DoesNotExist:
+            logger.error(f"Location with pk {pk} not found for deletion")
+            return Response({
+                'status': 'error',
+                'message': 'Location not found.'
+            }, status=status.HTTP_404_NOT_FOUND)
 
     else:
         logger.error(f"Invalid request method: {request.method}")
