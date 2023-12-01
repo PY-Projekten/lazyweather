@@ -37,10 +37,12 @@ def location_list(request):
 
 @api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
 def location_detail(request, pk):
-    print("Received request data for location detail:", request.data)
+    logger.info(f"Received request for location_detail with method {request.method} and pk {pk}")
+    logger.debug(f"Request data: {request.data}")
 
     try:
         location = Location.objects.get(pk=pk)
+        logger.info(f"Location with pk {pk} retrieved successfully.")
     except Location.DoesNotExist:
         logger.error(f"Location with pk {pk} not found")
         return Response({
@@ -58,10 +60,11 @@ def location_detail(request, pk):
 
     elif request.method in ["PUT", "PATCH"]:
         serializer = LocationSerializer(location, data=request.data, partial=(request.method == "PATCH"))
+        logger.debug(f"Validating location data for update: {request.data}")
         if serializer.is_valid():
             serializer.save()
             updated_location = Location.objects.get(pk=pk)
-            print("Updated location:", updated_location)
+            logger.info(f"location with pk {pk} updated successfully.  Updated data: {updated_location}")
             return Response({
                 'status': 'success',
                 'message': 'Location updated successfully.',
@@ -76,6 +79,7 @@ def location_detail(request, pk):
 
     elif request.method == "DELETE":
         location.delete()
+        logger.info(f"Location with pk {pk} deleted successufully")
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     else:
@@ -320,11 +324,17 @@ def weather_query(request):
     return JsonResponse({'status': 'success', 'message': 'Data processed successfully.', 'data': response_data}, status=status.HTTP_200_OK)
 
 
+# def get_location(location_name):
+#     print(location_name)
+#     location = Location.objects.filter(name=location_name.lower()).first()
+#     print('L: ', dir(location))
+#     return Location.objects.filter(name=location_name.lower()).first()
+
 def get_location(location_name):
     print(location_name)
-    location = Location.objects.filter(name=location_name.lower()).first()
+    location = Location.objects.filter(name__iexact=location_name).first()
     print('L: ', dir(location))
-    return Location.objects.filter(name=location_name.lower()).first()
+    return location
 
 
 def fetch_weather_data(location, date, hour):
