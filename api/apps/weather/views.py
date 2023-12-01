@@ -18,18 +18,50 @@ from requests.exceptions import RequestException
 
 
 
+# @api_view(['GET', 'POST'])
+# def location_list(request):
+#     if request.method == 'GET':
+#         locations = Location.objects.all()
+#         serializer = LocationSerializer(locations, many=True)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+#     elif request.method == 'POST':
+#         serializer = LocationSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 @api_view(['GET', 'POST'])
 def location_list(request):
+    logger.info(f"Received request for location_list with method {request.method}")
+
     if request.method == 'GET':
         locations = Location.objects.all()
         serializer = LocationSerializer(locations, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        logger.info("Locations retrieved successfully.")
+        return Response({
+            'status': 'success',
+            'message': 'Locations retrieved successfully.',
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+
     elif request.method == 'POST':
         serializer = LocationSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            logger.info("New location created successfully.")
+            return Response({
+                'status': 'success',
+                'message': 'New location created successfully.',
+                'data': serializer.data
+            }, status=status.HTTP_201_CREATED)
+        else:
+            logger.error(f"Error in creating new location: {serializer.errors}")
+            return Response({
+                'status': 'error',
+                'message': 'Error creating new location.',
+                'errors': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -76,11 +108,6 @@ def location_detail(request, pk):
             'message': 'Error updating location.',
             'errors': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
-
-    # elif request.method == "DELETE":
-    #     location.delete()
-    #     logger.info(f"Location with pk {pk} deleted successufully")
-    #     return Response(status=status.HTTP_204_NO_CONTENT)
 
     elif request.method == "DELETE":
         try:
