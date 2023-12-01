@@ -150,7 +150,11 @@ def get_weather_data(location, days=7):
 
     # Check if the location already exists in the database
     if db_location is None:
-        db_location = Location.objects.create(longitude=longitude, latitude=latitude, name=location.lower())
+        # ** new version that does not convert newly created locations to lowercase by default
+        db_location = Location.objects.create(longitude=longitude, latitude=latitude, name=location)
+        # ** Older version that converts newly created locations to lowercase by default
+        # db_location = Location.objects.create(longitude=longitude, latitude=latitude, name=location.lower())
+
 
     # Check if the weather data for the location is up-to-date
     date = django.utils.timezone.now()
