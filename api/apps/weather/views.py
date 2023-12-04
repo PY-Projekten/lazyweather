@@ -18,18 +18,6 @@ from requests.exceptions import RequestException
 
 
 
-# @api_view(['GET', 'POST'])
-# def location_list(request):
-#     if request.method == 'GET':
-#         locations = Location.objects.all()
-#         serializer = LocationSerializer(locations, many=True)
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-#     elif request.method == 'POST':
-#         serializer = LocationSerializer(data=request.data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_201_CREATED)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'POST'])
 def location_list(request):
@@ -117,7 +105,7 @@ def location_detail(request, pk):
             return Response({
                 'status': 'success',
                 'message': 'Location deleted successfully.'
-            }, status=status.HTTP_204_NO_CONTENT)
+            }, status=status.HTTP_200_OK)
         except Location.DoesNotExist:
             logger.error(f"Location with pk {pk} not found for deletion")
             return Response({
